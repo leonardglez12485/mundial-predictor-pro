@@ -7,6 +7,7 @@ import { formatKickoff, formatCountdown, isPredictionLocked, minutesUntilKickoff
 import { Lock, Clock, CheckCircle2, Radio } from "lucide-react";
 import { usePredictions } from "@/context/PredictionsContext";
 import { useAuth } from "@/context/AuthContext";
+import { Flag } from "@/components/Flag";
 
 const statusConfig = {
   pending: { label: "Pendiente", color: "bg-secondary text-secondary-foreground", icon: Clock },
@@ -36,8 +37,8 @@ export function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-center">
-          <div className="mb-1 text-3xl">{match.home.flag}</div>
+        <div className="flex flex-col items-center text-center">
+          <Flag team={match.home} size={36} className="mb-2" />
           <div className="text-sm font-semibold">{match.home.name}</div>
         </div>
         <div className="flex flex-col items-center">
@@ -50,8 +51,8 @@ export function MatchCard({ match }: { match: Match }) {
           )}
           <div className="mt-1 text-xs text-muted-foreground">{formatKickoff(match.kickoff)}</div>
         </div>
-        <div className="text-center">
-          <div className="mb-1 text-3xl">{match.away.flag}</div>
+        <div className="flex flex-col items-center text-center">
+          <Flag team={match.away} size={36} className="mb-2" />
           <div className="text-sm font-semibold">{match.away.name}</div>
         </div>
       </div>
