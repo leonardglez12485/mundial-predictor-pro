@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { CalendarDays, Trophy, Target, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Dashboard — Prode Mundial" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Balero World Cup" }] }),
   component: DashboardPage,
 });
 

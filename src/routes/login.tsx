@@ -1,23 +1,22 @@
-import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
 import { toast } from "sonner";
+import heroImg from "@/assets/uruguay-hero.jpg";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Iniciar sesión — Prode Mundial" }] }),
+  head: () => ({ meta: [{ title: "Iniciar sesión — Balero World Cup" }] }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("diego@uy.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,61 +31,82 @@ function LoginPage() {
         toast.error(res.error || "Error");
       }
       setLoading(false);
-    }, 400);
+    }, 300);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--gradient-soft)] px-4 py-12">
-      <div className="w-full max-w-md animate-slide-up">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--gradient-primary)] shadow-[var(--shadow-glow)]">
-            <Trophy className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-            Prode Mundial
+    <div className="min-h-screen bg-[var(--gradient-soft)]">
+      <main className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-20">
+        {/* Left: brand + image */}
+        <section className="text-center lg:text-left">
+          <h1 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
+            Balero World Cup
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">Predicciones del Mundial de Fútbol</p>
-        </div>
+          <p className="mt-3 text-lg text-foreground/80 sm:text-xl">
+            Predecí los partidos del Mundial, sumá puntos y subí en el ranking. Cree en grande.
+          </p>
 
-        <Card className="border-border/50 p-8 shadow-[var(--shadow-elegant)]">
-          <h2 className="mb-1 text-xl font-semibold">Iniciar sesión</h2>
-          <p className="mb-6 text-sm text-muted-foreground">Bienvenido de vuelta</p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)}
-                required placeholder="tu@email.com" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)}
-                required placeholder="••••••••" className="h-11" />
-            </div>
-
-            <Button type="submit" disabled={loading}
-              className="h-11 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)] transition-all hover:shadow-[var(--shadow-glow)]">
-              {loading ? "Ingresando..." : "Ingresar"}
-            </Button>
-          </form>
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">o</span>
-            <div className="h-px flex-1 bg-border" />
+          <div className="mt-8 overflow-hidden rounded-3xl shadow-[var(--shadow-elegant)] ring-1 ring-primary/20 animate-slide-up">
+            <img
+              src={heroImg}
+              alt="Selección uruguaya — Balero World Cup"
+              className="h-auto w-full object-cover"
+              loading="eager"
+            />
           </div>
+        </section>
 
-          <Link to="/register">
-            <Button variant="outline" className="h-11 w-full font-semibold">
-              Crear cuenta nueva
-            </Button>
-          </Link>
-        </Card>
+        {/* Right: login card */}
+        <section className="mx-auto w-full max-w-md lg:mx-0">
+          <Card className="border-border/50 p-6 shadow-[var(--shadow-elegant)]">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <Input
+                type="text"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                placeholder="Email o usuario"
+                className="h-14 text-base"
+                autoComplete="username"
+              />
+              <Input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="Contraseña"
+                className="h-14 text-base"
+                autoComplete="current-password"
+              />
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-12 w-full bg-[var(--gradient-primary)] text-base font-bold shadow-[var(--shadow-soft)] transition-all hover:shadow-[var(--shadow-glow)]"
+              >
+                {loading ? "Ingresando..." : "Iniciar sesión"}
+              </Button>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Demo: <code className="rounded bg-secondary px-1.5 py-0.5">diego@uy.com</code> / <code className="rounded bg-secondary px-1.5 py-0.5">demo1234</code>
-        </p>
-      </div>
+              <div className="text-center">
+                <button type="button" className="text-sm text-primary-deep hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              <div className="my-3 h-px bg-border" />
+
+              <Link to="/register">
+                <Button type="button" className="h-12 w-full bg-success text-base font-bold text-success-foreground hover:opacity-90">
+                  Crear cuenta nueva
+                </Button>
+              </Link>
+            </form>
+          </Card>
+
+          <p className="mt-5 text-center text-xs text-muted-foreground">
+            <strong>Crea una cuenta</strong> para predecir partidos del Mundial.
+          </p>
+        </section>
+      </main>
     </div>
   );
 }
