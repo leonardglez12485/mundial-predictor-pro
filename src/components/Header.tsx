@@ -103,7 +103,11 @@ export function Header() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link to="/"><DropdownMenuItem><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</DropdownMenuItem></Link>
+              <Link to="/special"><DropdownMenuItem><Star className="mr-2 h-4 w-4" />Mi pronóstico</DropdownMenuItem></Link>
               <Link to="/ranking"><DropdownMenuItem><Medal className="mr-2 h-4 w-4" />Ranking</DropdownMenuItem></Link>
+              {isAdmin && (
+                <Link to="/admin"><DropdownMenuItem><Shield className="mr-2 h-4 w-4" />Panel admin</DropdownMenuItem></Link>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setPwOpen(true); }}>
                 <KeyRound className="mr-2 h-4 w-4" />Cambiar contraseña
