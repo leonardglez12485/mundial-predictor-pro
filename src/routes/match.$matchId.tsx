@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Lock, X, Plus, Trophy, Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { Flag } from "@/components/Flag";
 
 export const Route = createFileRoute("/match/$matchId")({
   head: () => ({ meta: [{ title: "Predicción — Prode Mundial" }] }),
@@ -97,13 +98,13 @@ function PredictionForm() {
         )}
 
         <div className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-          <div className="text-center">
-            <div className="mb-2 text-6xl">{match.home.flag}</div>
+          <div className="flex flex-col items-center text-center">
+            <Flag team={match.home} size={64} className="mb-3" />
             <div className="text-lg font-bold">{match.home.name}</div>
           </div>
           <div className="text-3xl font-black text-muted-foreground">VS</div>
-          <div className="text-center">
-            <div className="mb-2 text-6xl">{match.away.flag}</div>
+          <div className="flex flex-col items-center text-center">
+            <Flag team={match.away} size={64} className="mb-3" />
             <div className="text-lg font-bold">{match.away.name}</div>
           </div>
         </div>
