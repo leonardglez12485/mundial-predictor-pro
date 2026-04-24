@@ -1,9 +1,10 @@
 export type MatchStatus = "pending" | "live" | "finished";
+export type UserRole = "admin" | "user";
 
 export interface Team {
-  code: string;
+  code: string;        // ISO-2 country code (lowercase) e.g. "uy", "ar"
   name: string;
-  flag: string; // emoji
+  flag: string;        // emoji fallback
 }
 
 export interface Match {
@@ -26,11 +27,23 @@ export interface Prediction {
   updatedAt: string;
 }
 
+export interface SpecialPrediction {
+  userId: string;
+  championCode: string;          // team code
+  topScorer: string;             // player name
+  finalHomeCode: string;
+  finalAwayCode: string;
+  finalHomeGoals: number;
+  finalAwayGoals: number;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  avatar: string; // initials color seed
+  avatar: string;       // initials
   password: string;
   points: number;
+  role: UserRole;
 }
