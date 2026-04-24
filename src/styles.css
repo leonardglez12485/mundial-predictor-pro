@@ -42,6 +42,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-primary-glow: var(--primary-glow);
+  --color-primary-deep: var(--primary-deep);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -62,26 +68,40 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.875rem;
+  --background: oklch(0.985 0.005 230);
+  --foreground: oklch(0.18 0.03 240);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.18 0.03 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --popover-foreground: oklch(0.18 0.03 240);
+  /* Celeste Uruguay */
+  --primary: oklch(0.7 0.13 230);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-glow: oklch(0.82 0.11 225);
+  --primary-deep: oklch(0.55 0.14 235);
+  --secondary: oklch(0.96 0.015 230);
+  --secondary-foreground: oklch(0.25 0.04 240);
+  --muted: oklch(0.965 0.01 230);
+  --muted-foreground: oklch(0.5 0.025 240);
+  --accent: oklch(0.93 0.04 225);
+  --accent-foreground: oklch(0.25 0.05 240);
+  --destructive: oklch(0.62 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.7 0.15 150);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.2 0.02 75);
+  --border: oklch(0.92 0.015 230);
+  --input: oklch(0.93 0.015 230);
+  --ring: oklch(0.7 0.13 230);
+  --gradient-primary: linear-gradient(135deg, oklch(0.7 0.13 230), oklch(0.82 0.11 225));
+  --gradient-hero: linear-gradient(135deg, oklch(0.55 0.14 235) 0%, oklch(0.7 0.13 230) 50%, oklch(0.85 0.09 220) 100%);
+  --gradient-soft: linear-gradient(180deg, oklch(0.985 0.005 230), oklch(0.95 0.025 225));
+  --shadow-soft: 0 4px 20px -4px oklch(0.55 0.14 235 / 0.12);
+  --shadow-elegant: 0 12px 40px -10px oklch(0.55 0.14 235 / 0.25);
+  --shadow-glow: 0 0 40px oklch(0.7 0.13 230 / 0.35);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -137,8 +157,21 @@
     border-color: var(--color-border);
   }
 
-  body {
+  html, body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--color-background);
     color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
   }
 }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.4s ease-out; }
+.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
