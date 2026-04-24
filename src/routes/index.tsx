@@ -1,11 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { MatchCard } from "@/components/MatchCard";
 import { usePredictions } from "@/context/PredictionsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
-import { CalendarDays, Trophy, Target, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, Trophy, Target, TrendingUp, Star, ArrowRight } from "lucide-react";
+import { isSpecialPredictionLocked, timeUntilSpecialDeadline } from "@/lib/scoring";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Dashboard — Balero World Cup" }] }),
@@ -24,7 +26,7 @@ function DashboardPage() {
 }
 
 function Dashboard() {
-  const { matches, predictions } = usePredictions();
+  const { matches, predictions, getSpecialPrediction } = usePredictions();
   const { user, users } = useAuth();
   if (!user) return null;
 
@@ -33,6 +35,8 @@ function Dashboard() {
   const userPredictions = predictions.filter(p => p.userId === user.id);
   const ranking = [...users].sort((a, b) => b.points - a.points);
   const userRank = ranking.findIndex(u => u.id === user.id) + 1;
+  const specialPred = getSpecialPrediction(user.id);
+  const specialLocked = isSpecialPredictionLocked();
 
   const stats = [
     { label: "Partidos hoy", value: todayMatches.length, icon: CalendarDays, color: "from-primary to-primary-glow" },

@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Flag } from "@/components/Flag";
 
 export const Route = createFileRoute("/match/$matchId")({
-  head: () => ({ meta: [{ title: "Predicción — Prode Mundial" }] }),
+  head: () => ({ meta: [{ title: "Predicción — Balero World Cup" }] }),
   component: MatchPredictionPage,
 });
 
