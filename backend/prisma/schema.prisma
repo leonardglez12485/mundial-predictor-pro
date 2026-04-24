@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum MatchStatus {
+  pending
+  live
+  finished
+}
+
+enum PredictionWinner {
+  home
+  away
+  draw
+}
+
+model User {
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  avatar            String
+  passwordHash      String
+  points            Int                @default(0)
+  role              UserRole           @default(user)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  predictions       Prediction[]
+  specialPrediction SpecialPrediction?
+}
+
+model Team {
+  id                          String              @id @default(cuid())
+  code                        String              @unique
+  name                        String
+  flag                        String
+  homeMatches                 Match[]             @relation("HomeTeam")
+  awayMatches                 Match[]             @relation("AwayTeam")
+  championSpecialPredictions  SpecialPrediction[] @relation("ChampionTeam")
+  finalHomeSpecialPredictions SpecialPrediction[] @relation("FinalHomeTeam")
+  finalAwaySpecialPredictions SpecialPrediction[] @relation("FinalAwayTeam")
+}
+
+model Match {
+  id         String       @id @default(cuid())
+  kickoff    DateTime
+  status     MatchStatus  @default(pending)
+  group      String?
+  homeTeamId String
+  awayTeamId String
+  homeGoals  Int?
+  awayGoals  Int?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  homeTeam   Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam   Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  scorers    MatchScorer[]
+  predictions Prediction[]
+}
+
+model MatchScorer {
+  id        String   @id @default(cuid())
+  matchId    String
+  name      String
+  sortOrder Int      @default(0)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
+
+model Prediction {
+  id         String             @id @default(cuid())
+  matchId    String
+  userId     String
+  winner     PredictionWinner
+  homeGoals  Int
+  awayGoals  Int
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  match      Match              @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scorers    PredictionScorer[]
+
+  @@unique([matchId, userId])
+}
+
+model PredictionScorer {
+  id           String      @id @default(cuid())
+  predictionId String
+  name         String
+  sortOrder    Int         @default(0)
+  prediction   Prediction  @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+}
+
+model SpecialPrediction {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  championTeamId  String
+  topScorer       String
+  finalHomeTeamId String
+  finalAwayTeamId String
+  finalHomeGoals  Int
+  finalAwayGoals  Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  championTeam    Team     @relation("ChampionTeam", fields: [championTeamId], references: [id])
+  finalHomeTeam   Team     @relation("FinalHomeTeam", fields: [finalHomeTeamId], references: [id])
+  finalAwayTeam   Team     @relation("FinalAwayTeam", fields: [finalAwayTeamId], references: [id])
+}
