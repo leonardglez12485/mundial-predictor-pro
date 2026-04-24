@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Trophy, Medal } from "lucide-react";
 
 export const Route = createFileRoute("/ranking")({
-  head: () => ({ meta: [{ title: "Ranking — Prode Mundial" }] }),
+  head: () => ({ meta: [{ title: "Ranking — Balero World Cup" }] }),
   component: RankingPage,
 });
 

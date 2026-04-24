@@ -2,6 +2,28 @@ import type { Match, Prediction } from "./types";
 
 export const PREDICTION_LOCK_MINUTES = 60;
 
+// Mundial 2026 — kick-off oficial: 11 de junio 2026
+export const WORLD_CUP_START_ISO = "2026-06-11T00:00:00.000Z";
+// Deadline para predicciones especiales: 1 día antes
+export const SPECIAL_PREDICTION_DEADLINE_ISO = "2026-06-10T00:00:00.000Z";
+
+export function isWorldCupStarted(): boolean {
+  return Date.now() >= new Date(WORLD_CUP_START_ISO).getTime();
+}
+
+export function isSpecialPredictionLocked(): boolean {
+  return Date.now() >= new Date(SPECIAL_PREDICTION_DEADLINE_ISO).getTime();
+}
+
+export function timeUntilSpecialDeadline(): string {
+  const ms = new Date(SPECIAL_PREDICTION_DEADLINE_ISO).getTime() - Date.now();
+  if (ms <= 0) return "Cerrado";
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  if (days > 0) return `${days}d ${hours}h`;
+  return `${hours}h`;
+}
+
 export function minutesUntilKickoff(kickoff: string): number {
   return Math.floor((new Date(kickoff).getTime() - Date.now()) / 60000);
 }

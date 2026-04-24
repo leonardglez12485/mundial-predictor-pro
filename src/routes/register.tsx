@@ -9,7 +9,7 @@ import { Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
-  head: () => ({ meta: [{ title: "Crear cuenta — Prode Mundial" }] }),
+  head: () => ({ meta: [{ title: "Crear cuenta — Balero World Cup" }] }),
   component: RegisterPage,
 });
 
@@ -29,7 +29,8 @@ function RegisterPage() {
       const res = register(name.trim(), email.trim(), password);
       if (res.ok) {
         toast.success("¡Cuenta creada!");
-        navigate({ to: "/" });
+        // primer login => llevar a especiales
+        navigate({ to: "/special" });
       } else {
         toast.error(res.error || "Error");
       }
@@ -45,7 +46,7 @@ function RegisterPage() {
             <Trophy className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-            Prode Mundial
+            Balero World Cup
           </h1>
         </div>
 

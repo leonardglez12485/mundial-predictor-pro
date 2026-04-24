@@ -13,8 +13,8 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | null>(null);
-const STORAGE_USERS = "prode_users";
-const STORAGE_SESSION = "prode_session";
+const STORAGE_USERS = "balero_users_v2";
+const STORAGE_SESSION = "balero_session_v2";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>(() => {
@@ -42,8 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem(STORAGE_SESSION);
   };
 
-  const login = (email: string, password: string) => {
-    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const login = (emailOrUser: string, password: string) => {
+    const q = emailOrUser.trim().toLowerCase();
+    const found = users.find(u =>
+      u.email.toLowerCase() === q || u.name.toLowerCase() === q
+    );
     if (!found) return { ok: false, error: "Usuario no encontrado" };
     if (found.password !== password) return { ok: false, error: "Contraseña incorrecta" };
     setUser(found);
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name, email, password,
       avatar: name.split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase(),
       points: 0,
+      role: "user",
     };
     setUsers(prev => [...prev, newUser]);
     setUser(newUser);

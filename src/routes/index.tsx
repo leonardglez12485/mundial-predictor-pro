@@ -1,14 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { MatchCard } from "@/components/MatchCard";
 import { usePredictions } from "@/context/PredictionsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
-import { CalendarDays, Trophy, Target, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, Trophy, Target, TrendingUp, Star, ArrowRight } from "lucide-react";
+import { isSpecialPredictionLocked, timeUntilSpecialDeadline } from "@/lib/scoring";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Dashboard — Prode Mundial" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Balero World Cup" }] }),
   component: DashboardPage,
 });
 
@@ -24,7 +26,7 @@ function DashboardPage() {
 }
 
 function Dashboard() {
-  const { matches, predictions } = usePredictions();
+  const { matches, predictions, getSpecialPrediction } = usePredictions();
   const { user, users } = useAuth();
   if (!user) return null;
 
@@ -33,6 +35,8 @@ function Dashboard() {
   const userPredictions = predictions.filter(p => p.userId === user.id);
   const ranking = [...users].sort((a, b) => b.points - a.points);
   const userRank = ranking.findIndex(u => u.id === user.id) + 1;
+  const specialPred = getSpecialPrediction(user.id);
+  const specialLocked = isSpecialPredictionLocked();
 
   const stats = [
     { label: "Partidos hoy", value: todayMatches.length, icon: CalendarDays, color: "from-primary to-primary-glow" },
@@ -71,6 +75,35 @@ function Dashboard() {
           );
         })}
       </div>
+
+      {!specialLocked && !specialPred && (
+        <Card className="mb-8 overflow-hidden border-primary/30 bg-[var(--gradient-primary)] p-5 text-primary-foreground shadow-[var(--shadow-soft)] animate-slide-up">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
+              <Star className="h-6 w-6" />
+            </div>
+            <div className="min-w-[200px] flex-1">
+              <div className="font-bold">¡Hacé tu pronóstico del Mundial!</div>
+              <div className="text-sm text-white/90">Campeón, goleador y final. Tiempo restante: {timeUntilSpecialDeadline()}</div>
+            </div>
+            <Link to="/special">
+              <Button variant="secondary" className="font-semibold">
+                Predecir <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
+      {!specialLocked && specialPred && (
+        <Card className="mb-8 border-primary/20 bg-primary/5 p-4 animate-slide-up">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <Star className="h-4 w-4 text-primary" />
+            <span>Pronóstico cargado. Podés modificarlo hasta el cierre ({timeUntilSpecialDeadline()} restantes).</span>
+            <Link to="/special" className="ml-auto text-sm font-semibold text-primary-deep hover:underline">Ver / Editar</Link>
+          </div>
+        </Card>
+      )}
 
       <div className="mb-6 flex items-end justify-between">
         <div>
