@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name, email, password,
       avatar: name.split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase(),
       points: 0,
+      role: "user",
     };
     setUsers(prev => [...prev, newUser]);
     setUser(newUser);
