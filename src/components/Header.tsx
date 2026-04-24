@@ -6,7 +6,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, LogOut, KeyRound, LayoutDashboard, Medal } from "lucide-react";
+import { Trophy, LogOut, KeyRound, LayoutDashboard, Medal, Star, Shield } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
@@ -42,9 +42,12 @@ export function Header() {
 
   if (!user) return null;
 
+  const isAdmin = user.role === "admin";
   const navItems = [
     { to: "/", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/special", label: "Mi pronóstico", icon: Star },
     { to: "/ranking", label: "Ranking", icon: Medal },
+    ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield } as const] : []),
   ] as const;
 
   return (
@@ -55,7 +58,7 @@ export function Header() {
             <Trophy className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-            Prode Mundial
+            Balero World Cup
           </span>
         </Link>
 
