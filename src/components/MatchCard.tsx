@@ -8,6 +8,7 @@ import { Lock, Clock, CheckCircle2, Radio } from "lucide-react";
 import { usePredictions } from "@/context/PredictionsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Flag } from "@/components/Flag";
+import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
 
 const statusConfig = {
   pending: { label: "Pendiente", color: "bg-secondary text-secondary-foreground", icon: Clock },
@@ -18,8 +19,10 @@ const statusConfig = {
 export function MatchCard({ match }: { match: Match }) {
   const { user } = useAuth();
   const { getPrediction } = usePredictions();
+  const isAdmin = user?.role === "admin";
   const prediction = user ? getPrediction(match.id, user.id) : undefined;
   const locked = isPredictionLocked(match);
+  const participantsResolved = hasResolvedParticipants(match);
   const status = statusConfig[match.status];
   const StatusIcon = status.icon;
   const mins = minutesUntilKickoff(match.kickoff);
@@ -33,7 +36,7 @@ export function MatchCard({ match }: { match: Match }) {
           <StatusIcon className="h-3 w-3" />
           {status.label}
         </Badge>
-        {match.group && <span className="text-xs font-medium text-muted-foreground">Grupo {match.group}</span>}
+        <span className="text-xs font-medium text-muted-foreground">{formatMatchStage(match)}</span>
       </div>
 
       <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -64,6 +67,12 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
       )}
 
+      {!participantsResolved && (
+        <div className="mb-4 rounded-lg border border-border bg-secondary/40 p-3 text-center text-xs text-muted-foreground">
+          Cruce pendiente de clasificación
+        </div>
+      )}
+
       {prediction && (
         <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
           <div className="text-xs text-muted-foreground">Tu predicción</div>
@@ -73,14 +82,18 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
       )}
 
-      <Link to="/match/$matchId" params={{ matchId: match.id }}>
+      <Link to={isAdmin ? "/admin" : "/match/$matchId"} params={isAdmin ? undefined : { matchId: match.id }}>
         <Button
           variant={locked ? "outline" : "default"}
           className="w-full"
-          disabled={match.status === "finished"}
+          disabled={isAdmin ? false : match.status === "finished" || !participantsResolved}
         >
-          {match.status === "finished" ? (
+          {isAdmin ? (
+            <>Gestionar partido</>
+          ) : match.status === "finished" ? (
             <>Ver resultado</>
+          ) : !participantsResolved ? (
+            <>Esperando clasificados</>
           ) : locked ? (
             <><Lock className="mr-2 h-4 w-4" />
               {mins < 0 ? "Cerrado (en juego)" : `Cerrado (${PREDICTION_LOCK_MINUTES}min)`}

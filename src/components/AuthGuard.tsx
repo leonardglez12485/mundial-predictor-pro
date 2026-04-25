@@ -3,13 +3,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "@tanstack/react-router";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) navigate({ to: "/login" });
-  }, [user, navigate]);
+    if (!loading && !user) navigate({ to: "/login" });
+  }, [loading, user, navigate]);
 
-  if (!user) return null;
+  if (loading || !user) return null;
   return <>{children}</>;
 }

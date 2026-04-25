@@ -21,19 +21,19 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      const res = login(email, password);
-      if (res.ok) {
-        toast.success("¡Bienvenido!");
-        navigate({ to: "/" });
-      } else {
-        toast.error(res.error || "Error");
-      }
-      setLoading(false);
-    }, 300);
+
+    const res = await login(email, password);
+    if (res.ok) {
+      toast.success("¡Bienvenido!");
+      navigate({ to: "/" });
+    } else {
+      toast.error(res.error || "Error");
+    }
+
+    setLoading(false);
   };
 
   return (

@@ -3,17 +3,17 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { usePredictions } from "@/context/PredictionsContext";
-import { TEAMS } from "@/lib/mockData";
 import { isSpecialPredictionLocked, isWorldCupStarted, timeUntilSpecialDeadline } from "@/lib/scoring";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flag } from "@/components/Flag";
 import { Star, Lock, Trophy, Save, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { createTeamMap, groupTeams } from "@/lib/teams";
 
 export const Route = createFileRoute("/special")({
   head: () => ({ meta: [{ title: "Mi pronóstico — Balero World Cup" }] }),
@@ -33,13 +33,23 @@ function SpecialPage() {
 
 function SpecialForm() {
   const { user } = useAuth();
-  const { getSpecialPrediction, saveSpecialPrediction } = usePredictions();
+  const { teams, getSpecialPrediction, saveSpecialPrediction, loading } = usePredictions();
   const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <Card className="p-10 text-center text-muted-foreground">Cargando tu pronóstico actual...</Card>
+      </main>
+    );
+  }
+
   const existing = user ? getSpecialPrediction(user.id) : undefined;
   const locked = isSpecialPredictionLocked();
   const started = isWorldCupStarted();
 
-  const teamCodes = Object.keys(TEAMS);
+  const groupedTeams = groupTeams(teams);
+  const teamMap = createTeamMap(teams);
 
   const [championCode, setChampionCode] = useState(existing?.championCode ?? "");
   const [topScorer, setTopScorer] = useState(existing?.topScorer ?? "");
@@ -50,7 +60,22 @@ function SpecialForm() {
 
   if (!user) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (user.role === "admin") {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <Link to="/admin" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Volver al panel admin
+        </Link>
+
+        <Card className="p-10 text-center">
+          <h1 className="text-2xl font-bold">Pronóstico no disponible para administradores</h1>
+          <p className="mt-2 text-muted-foreground">Esta cuenta solo gestiona partidos, resultados y goleadores.</p>
+        </Card>
+      </main>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return toast.error("El plazo ya cerró");
     if (!championCode || !topScorer.trim() || !finalHomeCode || !finalAwayCode) {
@@ -59,7 +84,7 @@ function SpecialForm() {
     if (finalHomeCode === finalAwayCode) {
       return toast.error("Los dos finalistas deben ser distintos");
     }
-    saveSpecialPrediction({
+    await saveSpecialPrediction({
       userId: user.id,
       championCode, topScorer: topScorer.trim(),
       finalHomeCode, finalAwayCode,
@@ -117,13 +142,18 @@ function SpecialForm() {
               <Select value={championCode} onValueChange={setChampionCode}>
                 <SelectTrigger className="h-12"><SelectValue placeholder="Elegí una selección..." /></SelectTrigger>
                 <SelectContent>
-                  {teamCodes.map(c => (
-                    <SelectItem key={c} value={c}>
-                      <span className="inline-flex items-center gap-2">
-                        <Flag team={TEAMS[c]} size={18} />
-                        {TEAMS[c].name}
-                      </span>
-                    </SelectItem>
+                  {groupedTeams.map(({ group, teams: teamsInGroup }) => (
+                    <SelectGroup key={group}>
+                      <SelectLabel>Grupo {group}</SelectLabel>
+                      {teamsInGroup.map((team) => (
+                        <SelectItem key={team.code} value={team.code}>
+                          <span className="inline-flex items-center gap-2">
+                            <Flag team={team} size={18} />
+                            {team.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
@@ -141,24 +171,34 @@ function SpecialForm() {
                 <Select value={finalHomeCode} onValueChange={setFinalHomeCode}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Finalista 1" /></SelectTrigger>
                   <SelectContent>
-                    {teamCodes.map(c => (
-                      <SelectItem key={c} value={c}>
-                        <span className="inline-flex items-center gap-2">
-                          <Flag team={TEAMS[c]} size={16} /> {TEAMS[c].name}
-                        </span>
-                      </SelectItem>
+                    {groupedTeams.map(({ group, teams: teamsInGroup }) => (
+                      <SelectGroup key={group}>
+                        <SelectLabel>Grupo {group}</SelectLabel>
+                        {teamsInGroup.map((team) => (
+                          <SelectItem key={team.code} value={team.code}>
+                            <span className="inline-flex items-center gap-2">
+                              <Flag team={team} size={16} /> {team.name}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
                 <Select value={finalAwayCode} onValueChange={setFinalAwayCode}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Finalista 2" /></SelectTrigger>
                   <SelectContent>
-                    {teamCodes.map(c => (
-                      <SelectItem key={c} value={c}>
-                        <span className="inline-flex items-center gap-2">
-                          <Flag team={TEAMS[c]} size={16} /> {TEAMS[c].name}
-                        </span>
-                      </SelectItem>
+                    {groupedTeams.map(({ group, teams: teamsInGroup }) => (
+                      <SelectGroup key={group}>
+                        <SelectLabel>Grupo {group}</SelectLabel>
+                        {teamsInGroup.map((team) => (
+                          <SelectItem key={team.code} value={team.code}>
+                            <span className="inline-flex items-center gap-2">
+                              <Flag team={team} size={16} /> {team.name}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
@@ -166,14 +206,14 @@ function SpecialForm() {
 
               <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
                 <div>
-                  <Label className="mb-1 block text-xs text-muted-foreground">Goles {finalHomeCode ? TEAMS[finalHomeCode]?.name : "Equipo 1"}</Label>
+                  <Label className="mb-1 block text-xs text-muted-foreground">Goles {finalHomeCode ? teamMap[finalHomeCode]?.name : "Equipo 1"}</Label>
                   <Input type="number" min={0} max={20} value={finalHomeGoals}
                     onChange={e => setFinalHomeGoals(Math.max(0, parseInt(e.target.value) || 0))}
                     className="h-14 text-center text-2xl font-bold" />
                 </div>
                 <div className="pb-4 text-2xl font-bold text-muted-foreground">-</div>
                 <div>
-                  <Label className="mb-1 block text-xs text-muted-foreground">Goles {finalAwayCode ? TEAMS[finalAwayCode]?.name : "Equipo 2"}</Label>
+                  <Label className="mb-1 block text-xs text-muted-foreground">Goles {finalAwayCode ? teamMap[finalAwayCode]?.name : "Equipo 2"}</Label>
                   <Input type="number" min={0} max={20} value={finalAwayGoals}
                     onChange={e => setFinalAwayGoals(Math.max(0, parseInt(e.target.value) || 0))}
                     className="h-14 text-center text-2xl font-bold" />
@@ -193,9 +233,9 @@ function SpecialForm() {
             <div className="rounded-xl border bg-card p-4 text-sm">
               <div className="mb-2 flex items-center gap-2 font-semibold"><Trophy className="h-4 w-4 text-primary" /> Tu pronóstico actual</div>
               <ul className="space-y-1 text-muted-foreground">
-                <li>Campeón: <strong className="text-foreground">{TEAMS[existing.championCode]?.name}</strong></li>
+                <li>Campeón: <strong className="text-foreground">{teamMap[existing.championCode]?.name}</strong></li>
                 <li>Goleador: <strong className="text-foreground">{existing.topScorer}</strong></li>
-                <li>Final: <strong className="text-foreground">{TEAMS[existing.finalHomeCode]?.name} {existing.finalHomeGoals} - {existing.finalAwayGoals} {TEAMS[existing.finalAwayCode]?.name}</strong></li>
+                <li>Final: <strong className="text-foreground">{teamMap[existing.finalHomeCode]?.name} {existing.finalHomeGoals} - {existing.finalAwayGoals} {teamMap[existing.finalAwayCode]?.name}</strong></li>
               </ul>
             </div>
           )}

@@ -72,7 +72,37 @@ export class UsersService {
     }
 
     const passwordHash = await bcrypt.hash(nextPassword, 10);
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        refreshTokenHash: null,
+      },
+    });
+  }
+
+  async setRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
+    const refreshTokenHash = refreshToken ? await bcrypt.hash(refreshToken, 10) : null;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshTokenHash },
+    });
+  }
+
+  async hasValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
+    const user = await this.findById(userId);
+    if (!user?.refreshTokenHash) {
+      return false;
+    }
+
+    return bcrypt.compare(refreshToken, user.refreshTokenHash);
+  }
+
+  async revokeRefreshToken(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshTokenHash: null },
+    });
   }
 
   async listUsers(): Promise<User[]> {

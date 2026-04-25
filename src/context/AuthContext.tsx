@@ -1,79 +1,102 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { MOCK_USERS } from "@/lib/mockData";
+import { api, type PublicUser, readApiError } from "@/lib/api";
 import type { User } from "@/lib/types";
+
+type AuthActionResult = { ok: boolean; error?: string };
 
 interface AuthState {
   user: User | null;
   users: User[];
-  login: (email: string, password: string) => { ok: boolean; error?: string };
-  register: (name: string, email: string, password: string) => { ok: boolean; error?: string };
-  logout: () => void;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<AuthActionResult>;
+  register: (name: string, email: string, password: string) => Promise<AuthActionResult>;
+  logout: () => Promise<void>;
   updatePoints: (userId: string, points: number) => void;
-  changePassword: (current: string, next: string) => { ok: boolean; error?: string };
+  changePassword: (current: string, next: string) => Promise<AuthActionResult>;
+  refreshCurrentUser: () => Promise<void>;
+  refreshUsers: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
-const STORAGE_USERS = "balero_users_v2";
-const STORAGE_SESSION = "balero_session_v2";
+
+function toUser(user: PublicUser): User {
+  return {
+    ...user,
+    password: "",
+  };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>(() => {
-    if (typeof window === "undefined") return MOCK_USERS;
-    const stored = localStorage.getItem(STORAGE_USERS);
-    return stored ? JSON.parse(stored) : MOCK_USERS;
-  });
+  const [users, setUsers] = useState<User[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const session = localStorage.getItem(STORAGE_SESSION);
-    if (session) {
-      const id = JSON.parse(session);
-      const found = users.find(u => u.id === id);
-      if (found) setUser(found);
-    }
+    let active = true;
+
+    const bootstrap = async () => {
+      try {
+        const [session, ranking] = await Promise.all([
+          api.auth.refresh(),
+          api.ranking.list().catch(() => []),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setUsers(ranking.map(({ rank: _rank, ...entry }) => toUser(entry)));
+        setUser(session?.user ? toUser(session.user) : null);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void bootstrap();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
-  }, [users]);
-
-  const persistSession = (id: string | null) => {
-    if (id) localStorage.setItem(STORAGE_SESSION, JSON.stringify(id));
-    else localStorage.removeItem(STORAGE_SESSION);
+  const refreshUsers = async () => {
+    const ranking = await api.ranking.list();
+    setUsers(ranking.map(({ rank: _rank, ...entry }) => toUser(entry)));
   };
 
-  const login = (emailOrUser: string, password: string) => {
-    const q = emailOrUser.trim().toLowerCase();
-    const found = users.find(u =>
-      u.email.toLowerCase() === q || u.name.toLowerCase() === q
-    );
-    if (!found) return { ok: false, error: "Usuario no encontrado" };
-    if (found.password !== password) return { ok: false, error: "Contraseña incorrecta" };
-    setUser(found);
-    persistSession(found.id);
-    return { ok: true };
+  const refreshCurrentUser = async () => {
+    const currentUser = await api.auth.me();
+    setUser(toUser(currentUser));
   };
 
-  const register = (name: string, email: string, password: string) => {
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-      return { ok: false, error: "El email ya está registrado" };
+  const login = async (emailOrUser: string, password: string) => {
+    try {
+      const session = await api.auth.login(emailOrUser.trim(), password);
+      setUser(toUser(session.user));
+      await refreshUsers();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: readApiError(error, "No fue posible iniciar sesión") };
     }
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      name, email, password,
-      avatar: name.split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase(),
-      points: 0,
-      role: "user",
-    };
-    setUsers(prev => [...prev, newUser]);
-    setUser(newUser);
-    persistSession(newUser.id);
-    return { ok: true };
   };
 
-  const logout = () => {
+  const register = async (name: string, email: string, password: string) => {
+    try {
+      const session = await api.auth.register(name.trim(), email.trim(), password);
+      setUser(toUser(session.user));
+      await refreshUsers();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: readApiError(error, "No fue posible crear la cuenta") };
+    }
+  };
+
+  const logout = async () => {
+    await api.auth.logout();
     setUser(null);
-    persistSession(null);
+    setUsers([]);
   };
 
   const updatePoints = (userId: string, points: number) => {
@@ -81,16 +104,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(prev => prev && prev.id === userId ? { ...prev, points } : prev);
   };
 
-  const changePassword = (current: string, next: string) => {
-    if (!user) return { ok: false, error: "No hay sesión" };
-    if (user.password !== current) return { ok: false, error: "Contraseña actual incorrecta" };
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, password: next } : u));
-    setUser({ ...user, password: next });
-    return { ok: true };
+  const changePassword = async (current: string, next: string) => {
+    if (!user) {
+      return { ok: false, error: "No hay sesión" };
+    }
+
+    try {
+      await api.users.changePassword(current, next);
+      await Promise.all([refreshCurrentUser(), refreshUsers()]);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: readApiError(error, "No fue posible actualizar la contraseña") };
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, users, login, register, logout, updatePoints, changePassword }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        users,
+        loading,
+        login,
+        register,
+        logout,
+        updatePoints,
+        changePassword,
+        refreshCurrentUser,
+        refreshUsers,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

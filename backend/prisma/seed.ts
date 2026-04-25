@@ -1,26 +1,8 @@
 import { MatchStatus, PredictionWinner, PrismaClient, UserRole } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import { WORLD_CUP_TEAMS } from "./world-cup-teams";
 
 const prisma = new PrismaClient();
-
-const teams = [
-  { code: "uy", name: "Uruguay", flag: "🇺🇾" },
-  { code: "ar", name: "Argentina", flag: "🇦🇷" },
-  { code: "br", name: "Brasil", flag: "🇧🇷" },
-  { code: "es", name: "España", flag: "🇪🇸" },
-  { code: "fr", name: "Francia", flag: "🇫🇷" },
-  { code: "gb", name: "Inglaterra", flag: "🏴" },
-  { code: "de", name: "Alemania", flag: "🇩🇪" },
-  { code: "pt", name: "Portugal", flag: "🇵🇹" },
-  { code: "nl", name: "Países Bajos", flag: "🇳🇱" },
-  { code: "it", name: "Italia", flag: "🇮🇹" },
-  { code: "mx", name: "México", flag: "🇲🇽" },
-  { code: "us", name: "Estados Unidos", flag: "🇺🇸" },
-  { code: "ca", name: "Canadá", flag: "🇨🇦" },
-  { code: "jp", name: "Japón", flag: "🇯🇵" },
-  { code: "kr", name: "Corea del Sur", flag: "🇰🇷" },
-  { code: "ma", name: "Marruecos", flag: "🇲🇦" },
-];
 
 const users = [
   { id: "u-admin", name: "Admin", email: "admin@balero.com", password: "Realmadridfc*13", role: UserRole.admin },
@@ -93,7 +75,7 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.team.deleteMany();
 
-  await prisma.team.createMany({ data: teams });
+  await prisma.team.createMany({ data: WORLD_CUP_TEAMS });
   const teamsInDb = await prisma.team.findMany();
   const teamByCode = new Map(teamsInDb.map((team) => [team.code, team]));
 

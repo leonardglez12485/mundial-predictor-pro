@@ -14,4 +14,9 @@ export class CreateMatchDto {
   @IsString()
   @Length(1, 3)
   group?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 16)
+  phase?: string;
 }

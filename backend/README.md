@@ -31,6 +31,16 @@ npm run seed
 npm run start:dev
 ```
 
+Desde la raíz del proyecto también podés usar:
+
+```bash
+npm install
+npm run start
+```
+
+Eso levanta frontend + backend juntos usando la base SQLite local ya configurada.
+Si el backend ya está corriendo en el puerto 3001, el comando lo reutiliza y no intenta levantar otro.
+
 ## Variables de entorno
 
 Usa `.env` o `.env.example`:
@@ -39,12 +49,17 @@ Usa `.env` o `.env.example`:
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="dev-secret-change-me"
 PORT=3001
+COOKIE_SECURE=false
+CORS_ORIGINS="http://localhost:5173,http://localhost:3000"
+SWAGGER_ENABLED=true
 ```
 
 ## Rutas principales
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/teams`
 - `GET /api/matches`
@@ -58,3 +73,7 @@ PORT=3001
 - `GET /api/special-predictions/me`
 - `PUT /api/special-predictions/me`
 - `GET /api/ranking`
+
+## Swagger
+
+Con `SWAGGER_ENABLED=true`, la documentación queda disponible en `/api/docs`.

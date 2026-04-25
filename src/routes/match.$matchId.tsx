@@ -13,6 +13,7 @@ import { ArrowLeft, Lock, X, Plus, Trophy, Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Flag } from "@/components/Flag";
+import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
 
 export const Route = createFileRoute("/match/$matchId")({
   head: () => ({ meta: [{ title: "Predicción — Balero World Cup" }] }),
@@ -34,8 +35,16 @@ function PredictionForm() {
   const { matchId } = Route.useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { matches, getPrediction, savePrediction } = usePredictions();
+  const { matches, getPrediction, savePrediction, loading } = usePredictions();
   const match = matches.find(m => m.id === matchId);
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-10">
+        <Card className="p-10 text-center text-muted-foreground">Cargando partido y predicción...</Card>
+      </main>
+    );
+  }
 
   const existing = user && match ? getPrediction(match.id, user.id) : undefined;
   const [homeGoals, setHomeGoals] = useState(existing?.homeGoals ?? 1);
@@ -54,7 +63,20 @@ function PredictionForm() {
     );
   }
 
+  if (user.role === "admin") {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-10">
+        <Card className="p-10 text-center">
+          <p className="text-lg font-semibold">Acceso solo para gestión administrativa</p>
+          <p className="mt-2 text-muted-foreground">El administrador no puede crear predicciones. Cargá resultados y goleadores desde el panel admin.</p>
+          <Link to="/admin"><Button className="mt-4">Ir al panel admin</Button></Link>
+        </Card>
+      </main>
+    );
+  }
+
   const locked = isPredictionLocked(match);
+  const participantsResolved = hasResolvedParticipants(match);
   const winner: "home" | "away" | "draw" =
     homeGoals > awayGoals ? "home" : homeGoals < awayGoals ? "away" : "draw";
   const finished = match.status === "finished";
@@ -69,13 +91,13 @@ function PredictionForm() {
   };
   const removeScorer = (i: number) => setScorers(scorers.filter((_, idx) => idx !== i));
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return toast.error("Las predicciones están cerradas");
     if (homeGoals < 0 || awayGoals < 0 || homeGoals > 20 || awayGoals > 20) {
       return toast.error("Marcador inválido");
     }
-    savePrediction({
+    await savePrediction({
       matchId: match.id, userId: user.id,
       winner, homeGoals, awayGoals, scorers,
       updatedAt: new Date().toISOString(),
@@ -91,11 +113,9 @@ function PredictionForm() {
       </Link>
 
       <Card className="overflow-hidden p-8 shadow-[var(--shadow-elegant)] animate-slide-up">
-        {match.group && (
-          <div className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Grupo {match.group} · {formatKickoff(match.kickoff)}
-          </div>
-        )}
+        <div className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {formatMatchStage(match)} · {formatKickoff(match.kickoff)}
+        </div>
 
         <div className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div className="flex flex-col items-center text-center">
@@ -109,9 +129,15 @@ function PredictionForm() {
           </div>
         </div>
 
-        {match.status === "pending" && !locked && (
+        {match.status === "pending" && !locked && participantsResolved && (
           <div className="mb-6 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-center text-sm">
             ⏱️ {formatCountdown(match.kickoff)} — Aún puedes predecir
+          </div>
+        )}
+
+        {!participantsResolved && (
+          <div className="mb-6 rounded-xl border bg-secondary/40 px-4 py-3 text-center text-sm text-muted-foreground">
+            Este cruce todavía depende de clasificados previos. El calendario ya está cargado, pero la predicción quedará habilitada cuando se definan los equipos.
           </div>
         )}
 
@@ -142,7 +168,7 @@ function PredictionForm() {
         )}
 
         <form onSubmit={handleSave} className="space-y-6">
-          <fieldset disabled={locked} className="space-y-6 disabled:opacity-60">
+          <fieldset disabled={locked || !participantsResolved} className="space-y-6 disabled:opacity-60">
             <div>
               <Label className="mb-3 block text-base font-semibold">Marcador predicho</Label>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
@@ -206,7 +232,7 @@ function PredictionForm() {
             </div>
           </fieldset>
 
-          {!locked && (
+          {!locked && participantsResolved && (
             <Button type="submit" className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]">
               <Save className="mr-2 h-4 w-4" />
               {existing ? "Actualizar predicción" : "Guardar predicción"}

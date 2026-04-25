@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { join } from "node:path";
 import { AuthModule } from "./auth/auth.module";
 import { MatchesModule } from "./matches/matches.module";
 import { PredictionsModule } from "./predictions/predictions.module";
@@ -12,7 +13,10 @@ import { UsersModule } from "./users/users.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [join(process.cwd(), "backend", ".env"), join(process.cwd(), ".env")],
+    }),
     PrismaModule,
     ScoringModule,
     AuthModule,

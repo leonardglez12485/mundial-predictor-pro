@@ -3,18 +3,17 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { usePredictions } from "@/context/PredictionsContext";
-import { TEAMS } from "@/lib/mockData";
 import type { Match } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flag } from "@/components/Flag";
 import { Shield, Plus, Save, Trash2, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { formatKickoff } from "@/lib/scoring";
+import { createTeamMap, groupTeams } from "@/lib/teams";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Balero World Cup" }] }),
@@ -56,30 +55,42 @@ function AdminGate() {
 }
 
 function AdminPanel() {
-  const { matches, addMatch, updateMatchResult, setMatchStatus, deleteMatch } = usePredictions();
-  const teamCodes = Object.keys(TEAMS);
+  const { teams, matches, loading, addMatch, updateMatchResult, setMatchStatus, deleteMatch } = usePredictions();
+  const groupedTeams = groupTeams(teams);
+  const teamMap = createTeamMap(teams);
 
   const [homeCode, setHomeCode] = useState("");
   const [awayCode, setAwayCode] = useState("");
   const [kickoff, setKickoff] = useState("");
   const [group, setGroup] = useState("");
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!homeCode || !awayCode || !kickoff) return toast.error("Completá todos los campos");
     if (homeCode === awayCode) return toast.error("Los equipos deben ser distintos");
+    const homeTeam = teamMap[homeCode];
+    const awayTeam = teamMap[awayCode];
+    if (!homeTeam || !awayTeam) return toast.error("Seleccioná equipos válidos");
     const m: Match = {
       id: `m${Date.now()}`,
-      home: TEAMS[homeCode],
-      away: TEAMS[awayCode],
+      home: homeTeam,
+      away: awayTeam,
       kickoff: new Date(kickoff).toISOString(),
       status: "pending",
       group: group.trim() || undefined,
     };
-    addMatch(m);
+    await addMatch(m);
     toast.success("Partido agregado");
     setHomeCode(""); setAwayCode(""); setKickoff(""); setGroup("");
   };
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <Card className="p-10 text-center text-muted-foreground">Cargando panel y calendario...</Card>
+      </main>
+    );
+  }
 
   const sorted = [...matches].sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
 
@@ -107,10 +118,15 @@ function AdminPanel() {
             <Select value={homeCode} onValueChange={setHomeCode}>
               <SelectTrigger><SelectValue placeholder="Equipo local" /></SelectTrigger>
               <SelectContent>
-                {teamCodes.map(c => (
-                  <SelectItem key={c} value={c}>
-                    <span className="inline-flex items-center gap-2"><Flag team={TEAMS[c]} size={16} /> {TEAMS[c].name}</span>
-                  </SelectItem>
+                {groupedTeams.map(({ group, teams: teamsInGroup }) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>Grupo {group}</SelectLabel>
+                    {teamsInGroup.map((team) => (
+                      <SelectItem key={team.code} value={team.code}>
+                        <span className="inline-flex items-center gap-2"><Flag team={team} size={16} /> {team.name}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
@@ -120,10 +136,15 @@ function AdminPanel() {
             <Select value={awayCode} onValueChange={setAwayCode}>
               <SelectTrigger><SelectValue placeholder="Equipo visitante" /></SelectTrigger>
               <SelectContent>
-                {teamCodes.map(c => (
-                  <SelectItem key={c} value={c}>
-                    <span className="inline-flex items-center gap-2"><Flag team={TEAMS[c]} size={16} /> {TEAMS[c].name}</span>
-                  </SelectItem>
+                {groupedTeams.map(({ group, teams: teamsInGroup }) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>Grupo {group}</SelectLabel>
+                    {teamsInGroup.map((team) => (
+                      <SelectItem key={team.code} value={team.code}>
+                        <span className="inline-flex items-center gap-2"><Flag team={team} size={16} /> {team.name}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
@@ -149,9 +170,20 @@ function AdminPanel() {
         <div className="divide-y">
           {sorted.map(m => (
             <AdminMatchRow key={m.id} match={m}
-              onResult={(r) => { updateMatchResult(m.id, r); toast.success("Resultado guardado"); }}
-              onStatus={(s) => { setMatchStatus(m.id, s); toast.success("Estado actualizado"); }}
-              onDelete={() => { if (confirm("¿Eliminar partido?")) { deleteMatch(m.id); toast.success("Eliminado"); } }} />
+              onResult={async (r) => {
+                await updateMatchResult(m.id, r);
+                toast.success("Resultado guardado");
+              }}
+              onStatus={async (s) => {
+                await setMatchStatus(m.id, s);
+                toast.success("Estado actualizado");
+              }}
+              onDelete={async () => {
+                if (confirm("¿Eliminar partido?")) {
+                  await deleteMatch(m.id);
+                  toast.success("Eliminado");
+                }
+              }} />
           ))}
         </div>
       </Card>
@@ -161,9 +193,9 @@ function AdminPanel() {
 
 function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
   match: Match;
-  onResult: (r: { homeGoals: number; awayGoals: number; scorers: string[] }) => void;
-  onStatus: (s: Match["status"]) => void;
-  onDelete: () => void;
+  onResult: (r: { homeGoals: number; awayGoals: number; scorers: string[] }) => Promise<void>;
+  onStatus: (s: Match["status"]) => Promise<void>;
+  onDelete: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [hg, setHg] = useState(match.result?.homeGoals ?? 0);
@@ -185,7 +217,7 @@ function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Select value={match.status} onValueChange={(v) => onStatus(v as Match["status"])}>
+        <Select value={match.status} onValueChange={(v) => { void onStatus(v as Match["status"]); }}>
           <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="pending">Pendiente</SelectItem>
@@ -196,7 +228,7 @@ function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
         <Button size="sm" variant="outline" onClick={() => setOpen(o => !o)}>
           {match.result ? "Editar resultado" : "Cargar resultado"}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onDelete} className="ml-auto text-destructive hover:bg-destructive/10">
+        <Button size="sm" variant="ghost" onClick={() => { void onDelete(); }} className="ml-auto text-destructive hover:bg-destructive/10">
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
@@ -210,7 +242,7 @@ function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
           <Input value={scorers} onChange={e => setScorers(e.target.value)}
             placeholder="Goleadores separados por coma" className="h-10" />
           <Button size="sm" onClick={() => {
-            onResult({
+            void onResult({
               homeGoals: hg, awayGoals: ag,
               scorers: scorers.split(",").map(s => s.trim()).filter(Boolean),
             });

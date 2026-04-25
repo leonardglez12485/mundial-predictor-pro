@@ -5,6 +5,7 @@ export interface Team {
   code: string;        // ISO-2 country code (lowercase) e.g. "uy", "ar"
   name: string;
   flag: string;        // emoji fallback
+  group?: string;
 }
 
 export interface Match {
@@ -13,6 +14,7 @@ export interface Match {
   away: Team;
   kickoff: string; // ISO datetime
   status: MatchStatus;
+  phase?: string;
   group?: string;
   result?: { homeGoals: number; awayGoals: number; scorers: string[] };
 }
@@ -43,7 +45,7 @@ export interface User {
   name: string;
   email: string;
   avatar: string;       // initials
-  password: string;
+  password?: string;
   points: number;
   role: UserRole;
 }

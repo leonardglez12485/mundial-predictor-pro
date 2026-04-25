@@ -61,6 +61,7 @@ export class MatchesService {
     const match = await this.prisma.match.create({
       data: {
         kickoff: new Date(dto.kickoff),
+        phase: dto.phase?.trim() || null,
         group: dto.group?.trim() || null,
         homeTeamId: homeTeam.id,
         awayTeamId: awayTeam.id,
@@ -127,17 +128,19 @@ export class MatchesService {
     id: string;
     kickoff: Date;
     status: MatchStatus;
+    phase: string | null;
     group: string | null;
     homeGoals: number | null;
     awayGoals: number | null;
-    homeTeam: { code: string; name: string; flag: string };
-    awayTeam: { code: string; name: string; flag: string };
+    homeTeam: { code: string; name: string; flag: string; group?: string | null };
+    awayTeam: { code: string; name: string; flag: string; group?: string | null };
     scorers: { name: string }[];
   }) {
     return {
       id: match.id,
       kickoff: match.kickoff.toISOString(),
       status: match.status,
+      phase: match.phase ?? undefined,
       group: match.group ?? undefined,
       home: this.teamsService.toTeamResponse(match.homeTeam),
       away: this.teamsService.toTeamResponse(match.awayTeam),

@@ -30,6 +30,7 @@ model User {
   email             String             @unique
   avatar            String
   passwordHash      String
+  refreshTokenHash  String?
   points            Int                @default(0)
   role              UserRole           @default(user)
   createdAt         DateTime           @default(now())
@@ -43,6 +44,7 @@ model Team {
   code                        String              @unique
   name                        String
   flag                        String
+  group                       String?
   homeMatches                 Match[]             @relation("HomeTeam")
   awayMatches                 Match[]             @relation("AwayTeam")
   championSpecialPredictions  SpecialPrediction[] @relation("ChampionTeam")
@@ -54,6 +56,7 @@ model Match {
   id         String       @id @default(cuid())
   kickoff    DateTime
   status     MatchStatus  @default(pending)
+  phase      String?
   group      String?
   homeTeamId String
   awayTeamId String
