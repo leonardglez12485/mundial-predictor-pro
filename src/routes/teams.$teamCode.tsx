@@ -387,7 +387,7 @@ function positionBadgeClass(position: PlayerPosition) {
     case "DEF":
       return "border-transparent bg-green-600 text-white hover:bg-green-600";
     case "P":
-      return "border-transparent bg-orange-500 text-white hover:bg-orange-500";
+      return "border-transparent bg-amber-900 text-white hover:bg-amber-900";
     default:
       return "border border-border bg-secondary text-secondary-foreground";
   }
