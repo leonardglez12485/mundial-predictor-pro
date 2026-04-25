@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class UpdatePlayerDto {
   @IsOptional()
@@ -12,4 +12,9 @@ export class UpdatePlayerDto {
   @Type(() => Boolean)
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(["P", "DEF", "MED", "DEL"])
+  position?: string;
 }

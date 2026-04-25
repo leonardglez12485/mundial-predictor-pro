@@ -109,6 +109,13 @@ export class UsersService {
     return this.prisma.user.findMany({ orderBy: [{ points: "desc" }, { name: "asc" }] });
   }
 
+  async listCompetitiveUsers(): Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: { role: UserRole.user },
+      orderBy: [{ points: "desc" }, { name: "asc" }],
+    });
+  }
+
   toPublicUser(user: User) {
     return {
       id: user.id,

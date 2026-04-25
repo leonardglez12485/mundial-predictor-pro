@@ -59,6 +59,7 @@ model Player {
   id        String   @id @default(cuid())
   teamId    String
   name      String
+  position  String   @default("MED")
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

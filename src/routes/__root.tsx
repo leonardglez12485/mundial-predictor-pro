@@ -4,6 +4,7 @@ import { PredictionsProvider } from "@/context/PredictionsContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
+import faviconPng from "../assets/favicon.png?url";
 
 function NotFoundComponent() {
   return (
@@ -42,6 +43,11 @@ export const Route = createRootRoute({
       { name: "twitter:site", content: "@Balero" },
     ],
     links: [
+      {
+        rel: "icon",
+        type: "image/png",
+        href: faviconPng,
+      },
       {
         rel: "stylesheet",
         href: appCss,

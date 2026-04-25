@@ -52,6 +52,7 @@ export class TeamsService {
       data: {
         teamId: team.id,
         name,
+        position: dto.position ?? "MED",
       },
     });
   }
@@ -79,6 +80,7 @@ export class TeamsService {
       where: { id: playerId },
       data: {
         name: name ?? undefined,
+        position: dto.position,
         active: dto.active,
       },
     });
@@ -93,10 +95,11 @@ export class TeamsService {
     };
   }
 
-  toPlayerResponse(player: { id: string; name: string; active: boolean }) {
+  toPlayerResponse(player: { id: string; name: string; position: string; active: boolean }) {
     return {
       id: player.id,
       name: player.name,
+      position: player.position,
       active: player.active,
     };
   }
@@ -106,7 +109,7 @@ export class TeamsService {
     name: string;
     flag: string;
     group?: string | null;
-    players: { id: string; name: string; active: boolean }[];
+    players: { id: string; name: string; position: string; active: boolean }[];
   }) {
     return {
       ...this.toTeamResponse(team),
