@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { MatchStatus, PredictionWinner } from "@prisma/client";
+import { MatchStatus, PredictionWinner, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { parseStoredScorer, scorersMatch } from "./scorer-entry";
 
@@ -90,22 +90,33 @@ export class ScoringService {
 
   async recalculateAllUserPoints(): Promise<void> {
     const [users, matches] = await Promise.all([
-      this.prisma.user.findMany({ select: { id: true } }),
+      this.prisma.user.findMany({ select: { id: true, role: true } }),
       this.prisma.match.findMany({
         where: { status: MatchStatus.finished },
         include: {
           scorers: { orderBy: { sortOrder: "asc" } },
           predictions: {
-            include: { scorers: { orderBy: { sortOrder: "asc" } } },
+            include: {
+              scorers: { orderBy: { sortOrder: "asc" } },
+              user: { select: { role: true } },
+            },
           },
         },
       }),
     ]);
 
-    const pointsByUser = new Map<string, number>(users.map((user) => [user.id, 0]));
+    const competitorIds = users
+      .filter((user) => user.role === UserRole.user)
+      .map((user) => user.id);
+
+    const pointsByUser = new Map<string, number>(competitorIds.map((userId) => [userId, 0]));
 
     for (const match of matches) {
       for (const prediction of match.predictions) {
+        if (prediction.user.role !== UserRole.user) {
+          continue;
+        }
+
         const currentPoints = pointsByUser.get(prediction.userId) ?? 0;
         const predictionPoints = this.calculatePredictionPoints(prediction, match);
         pointsByUser.set(prediction.userId, currentPoints + predictionPoints);
@@ -113,9 +124,15 @@ export class ScoringService {
     }
 
     await this.prisma.$transaction(
-      [...pointsByUser.entries()].map(([userId, points]) =>
-        this.prisma.user.update({ where: { id: userId }, data: { points } }),
-      ),
+      [
+        this.prisma.user.updateMany({
+          where: { role: UserRole.admin },
+          data: { points: 0 },
+        }),
+        ...[...pointsByUser.entries()].map(([userId, points]) =>
+          this.prisma.user.update({ where: { id: userId }, data: { points } }),
+        ),
+      ],
     );
   }
 }

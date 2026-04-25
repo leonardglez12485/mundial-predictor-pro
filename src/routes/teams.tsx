@@ -78,7 +78,7 @@ function TeamsView() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {groupTables.map(({ group, rows }, index) => (
           <Card key={group} className="overflow-hidden animate-slide-up" style={{ animationDelay: `${index * 45}ms` }}>
             <div className="border-b bg-secondary/40 px-4 py-3">
