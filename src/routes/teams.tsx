@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { Flag } from "@/components/Flag";
@@ -14,11 +14,14 @@ export const Route = createFileRoute("/teams")({
 });
 
 function TeamsPage() {
+  const location = useLocation();
+  const showingList = location.pathname === "/teams";
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[var(--gradient-soft)]">
         <Header />
-        <TeamsView />
+        {showingList ? <TeamsView /> : <Outlet />}
       </div>
     </AuthGuard>
   );
@@ -75,7 +78,7 @@ function TeamsView() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {groupTables.map(({ group, rows }, index) => (
           <Card key={group} className="overflow-hidden animate-slide-up" style={{ animationDelay: `${index * 45}ms` }}>
             <div className="border-b bg-secondary/40 px-4 py-3">
@@ -99,14 +102,14 @@ function TeamsView() {
               <div className="divide-y">
                 {rows.map((row, rowIndex) => (
                   <div key={row.team.code} className="grid grid-cols-[minmax(0,1.95fr)_repeat(6,minmax(0,0.5fr))] items-center gap-2 px-1 py-2 text-xs">
-                    <Link to="/teams/$teamCode" params={{ teamCode: row.team.code }} className="flex min-w-0 items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-secondary/50">
+                    <a href={`/teams/${encodeURIComponent(row.team.code)}`} className="flex min-w-0 items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-secondary/50">
                       <span className="w-4 flex-shrink-0 text-[10px] font-bold text-muted-foreground">{rowIndex + 1}</span>
                       <Flag team={row.team} size={18} className="shadow-none" />
                       <div className="min-w-0">
                         <div className="truncate text-[12px] font-semibold leading-tight">{row.team.name}</div>
                         {/* <div className="text-[10px] text-muted-foreground">Ver plantel</div> */}
                       </div>
-                    </Link>
+                    </a>
                     <StatCell value={row.played} />
                     <StatCell value={row.won} />
                     <StatCell value={row.drawn} />

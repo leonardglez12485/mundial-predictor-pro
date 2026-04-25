@@ -215,13 +215,13 @@ export const api = {
     detail(code: string) {
       return request<TeamDetail>(`/teams/${code}`, { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
     },
-    createPlayer(code: string, name: string) {
+    createPlayer(code: string, input: { name: string; position: "P" | "DEF" | "MED" | "DEL" }) {
       return request<Player>(`/teams/${code}/players`, {
         method: "POST",
-        body: { name } as unknown as BodyInit,
+        body: input as unknown as BodyInit,
       });
     },
-    updatePlayer(code: string, playerId: string, input: { name?: string; active?: boolean }) {
+    updatePlayer(code: string, playerId: string, input: { name?: string; position?: "P" | "DEF" | "MED" | "DEL"; active?: boolean }) {
       return request<Player>(`/teams/${code}/players/${playerId}`, {
         method: "PATCH",
         body: input as unknown as BodyInit,

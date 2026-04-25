@@ -1,5 +1,6 @@
 export type MatchStatus = "pending" | "starting" | "live" | "delayed" | "finished";
 export type UserRole = "admin" | "user";
+export type PlayerPosition = "P" | "DEF" | "MED" | "DEL";
 
 export interface MatchScorer {
   name: string;
@@ -25,6 +26,7 @@ export interface Team {
 export interface Player {
   id: string;
   name: string;
+  position: PlayerPosition;
   active: boolean;
 }
 
