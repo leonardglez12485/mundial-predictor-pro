@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { usePredictions } from "@/context/PredictionsContext";
-import type { Match } from "@/lib/types";
+import { api, readApiError } from "@/lib/api";
+import type { Match, Player } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flag } from "@/components/Flag";
 import { Shield, Plus, Save, Trash2, ArrowLeft } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { createTeamMap, groupTeams } from "@/lib/teams";
 
@@ -193,14 +194,78 @@ function AdminPanel() {
 
 function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
   match: Match;
-  onResult: (r: { homeGoals: number; awayGoals: number; scorers: string[] }) => Promise<void>;
+  onResult: (r: { homeGoals: number; awayGoals: number; homeScorers: string[]; awayScorers: string[] }) => Promise<void>;
   onStatus: (s: Match["status"]) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [hg, setHg] = useState(match.result?.homeGoals ?? 0);
   const [ag, setAg] = useState(match.result?.awayGoals ?? 0);
-  const [scorers, setScorers] = useState((match.result?.scorers ?? []).join(", "));
+  const [homeScorers, setHomeScorers] = useState(() => resizeScorerList(match.result?.homeScorers ?? [], match.result?.homeGoals ?? 0));
+  const [awayScorers, setAwayScorers] = useState(() => resizeScorerList(match.result?.awayScorers ?? [], match.result?.awayGoals ?? 0));
+  const [homePlayers, setHomePlayers] = useState<Player[]>([]);
+  const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
+  const [playersLoading, setPlayersLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let active = true;
+
+    const loadPlayers = async () => {
+      setPlayersLoading(true);
+      try {
+        const [homeTeam, awayTeam] = await Promise.all([
+          api.teams.detail(match.home.code),
+          api.teams.detail(match.away.code),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setHomePlayers(homeTeam.players);
+        setAwayPlayers(awayTeam.players);
+      } catch (error) {
+        if (active) {
+          toast.error(readApiError(error, "No fue posible cargar el catálogo de jugadores"));
+        }
+      } finally {
+        if (active) {
+          setPlayersLoading(false);
+        }
+      }
+    };
+
+    void loadPlayers();
+
+    return () => {
+      active = false;
+    };
+  }, [open, match.away.code, match.home.code]);
+
+  const saveResult = () => {
+    const normalizedHomeScorers = homeScorers.map((scorer) => scorer.trim()).filter(Boolean);
+    const normalizedAwayScorers = awayScorers.map((scorer) => scorer.trim()).filter(Boolean);
+
+    if (normalizedHomeScorers.length !== hg) {
+      return toast.error(`El local debe tener ${hg} goleador${hg === 1 ? "" : "es"}`);
+    }
+
+    if (normalizedAwayScorers.length !== ag) {
+      return toast.error(`El visitante debe tener ${ag} goleador${ag === 1 ? "" : "es"}`);
+    }
+
+    void onResult({
+      homeGoals: hg,
+      awayGoals: ag,
+      homeScorers: normalizedHomeScorers,
+      awayScorers: normalizedAwayScorers,
+    });
+    setOpen(false);
+  };
 
   return (
     <div className="px-5 py-4">
@@ -221,7 +286,9 @@ function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
           <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="pending">Pendiente</SelectItem>
-            <SelectItem value="live">En juego</SelectItem>
+            <SelectItem value="starting">Iniciando</SelectItem>
+            <SelectItem value="live">En Desarrollo</SelectItem>
+            <SelectItem value="delayed">Atrasado</SelectItem>
             <SelectItem value="finished">Finalizado</SelectItem>
           </SelectContent>
         </Select>
@@ -234,24 +301,147 @@ function AdminMatchRow({ match, onResult, onStatus, onDelete }: {
       </div>
 
       {open && (
-        <div className="mt-3 grid gap-3 rounded-lg border bg-secondary/30 p-3 sm:grid-cols-[auto_auto_1fr_auto]">
-          <Input type="number" min={0} value={hg} onChange={e => setHg(Math.max(0, parseInt(e.target.value) || 0))}
-            className="h-10 w-20 text-center font-bold" />
-          <Input type="number" min={0} value={ag} onChange={e => setAg(Math.max(0, parseInt(e.target.value) || 0))}
-            className="h-10 w-20 text-center font-bold" />
-          <Input value={scorers} onChange={e => setScorers(e.target.value)}
-            placeholder="Goleadores separados por coma" className="h-10" />
-          <Button size="sm" onClick={() => {
-            void onResult({
-              homeGoals: hg, awayGoals: ag,
-              scorers: scorers.split(",").map(s => s.trim()).filter(Boolean),
-            });
-            setOpen(false);
-          }} className="bg-[var(--gradient-primary)]">
-            <Save className="mr-1 h-4 w-4" /> Guardar
-          </Button>
+        <div className="mt-3 space-y-4 rounded-lg border bg-secondary/30 p-3">
+          <div className="grid gap-3 sm:grid-cols-[auto_auto] sm:items-end">
+            <div>
+              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">Goles local</Label>
+              <Input type="number" min={0} value={hg} onChange={e => {
+                const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
+                setHg(nextGoals);
+                setHomeScorers(prev => resizeScorerList(prev, nextGoals));
+              }} className="h-10 w-24 text-center font-bold" />
+            </div>
+            <div>
+              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">Goles visitante</Label>
+              <Input type="number" min={0} value={ag} onChange={e => {
+                const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
+                setAg(nextGoals);
+                setAwayScorers(prev => resizeScorerList(prev, nextGoals));
+              }} className="h-10 w-24 text-center font-bold" />
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ScorerTeamSection
+              team={match.home}
+              goalCount={hg}
+              players={homePlayers}
+              playersLoading={playersLoading}
+              scorers={homeScorers}
+              onChange={setHomeScorers}
+            />
+            <ScorerTeamSection
+              team={match.away}
+              goalCount={ag}
+              players={awayPlayers}
+              playersLoading={playersLoading}
+              scorers={awayScorers}
+              onChange={setAwayScorers}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button size="sm" onClick={saveResult} className="bg-[var(--gradient-primary)]">
+              <Save className="mr-1 h-4 w-4" /> Guardar
+            </Button>
+          </div>
         </div>
       )}
     </div>
   );
+}
+
+function ScorerTeamSection({
+  team,
+  goalCount,
+  players,
+  playersLoading,
+  scorers,
+  onChange,
+}: {
+  team: Match["home"];
+  goalCount: number;
+  players: Player[];
+  playersLoading: boolean;
+  scorers: string[];
+  onChange: (scorers: string[]) => void;
+}) {
+  const playerOptions = buildAdminPlayerOptions(players, scorers);
+
+  return (
+    <div className="rounded-lg border bg-background/80 p-3">
+      <div className="mb-3 flex items-center gap-2">
+        <Flag team={team} size={18} className="shadow-none" />
+        <div>
+          <div className="text-sm font-semibold">{team.name}</div>
+          <div className="text-xs text-muted-foreground">{goalCount} gol{goalCount === 1 ? "" : "es"} cargado{goalCount === 1 ? "" : "s"}</div>
+        </div>
+      </div>
+
+      {goalCount === 0 ? (
+        <div className="rounded-md bg-secondary/50 px-3 py-2 text-sm text-muted-foreground">
+          Sin goles para este equipo.
+        </div>
+      ) : playersLoading ? (
+        <div className="rounded-md bg-secondary/50 px-3 py-2 text-sm text-muted-foreground">
+          Cargando jugadores...
+        </div>
+      ) : playerOptions.length === 0 ? (
+        <div className="space-y-2 rounded-md bg-secondary/50 px-3 py-3 text-sm text-muted-foreground">
+          <div>No hay jugadores activos cargados para esta selección.</div>
+          <Link to="/teams/$teamCode" params={{ teamCode: team.code }} className="font-medium text-primary hover:underline">
+            Ir al plantel de {team.name}
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {Array.from({ length: goalCount }, (_, index) => (
+            <div key={`${team.code}-${index}`} className="space-y-1">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Goleador {index + 1}</Label>
+              <Select
+                value={scorers[index] || undefined}
+                onValueChange={(value) => {
+                  const nextScorers = [...scorers];
+                  nextScorers[index] = value;
+                  onChange(nextScorers);
+                }}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder={`Seleccionar jugador de ${team.name}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {playerOptions.map((playerOption) => (
+                    <SelectItem key={playerOption.value} value={playerOption.value}>
+                      {playerOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function resizeScorerList(scorers: string[], goalCount: number) {
+  const nextScorers = scorers.slice(0, goalCount);
+  while (nextScorers.length < goalCount) {
+    nextScorers.push("");
+  }
+  return nextScorers;
+}
+
+function buildAdminPlayerOptions(players: Player[], selectedScorers: string[]) {
+  const activeNames = new Set(players.filter((player) => player.active).map((player) => player.name));
+  const optionNames = Array.from(new Set([
+    ...players.filter((player) => player.active).map((player) => player.name),
+    ...selectedScorers.filter(Boolean),
+  ])).sort((leftName, rightName) => leftName.localeCompare(rightName, "es"));
+
+  return optionNames.map((name) => ({
+    value: name,
+    label: activeNames.has(name) ? name : `${name} (baja)`,
+  }));
 }

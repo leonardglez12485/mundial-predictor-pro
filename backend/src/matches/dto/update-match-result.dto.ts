@@ -14,5 +14,9 @@ export class UpdateMatchResultDto {
 
   @IsArray()
   @IsString({ each: true })
-  scorers!: string[];
+  homeScorers!: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  awayScorers!: string[];
 }

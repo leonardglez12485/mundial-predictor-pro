@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { formatKickoff, formatCountdown, isPredictionLocked, minutesUntilKickoff, PREDICTION_LOCK_MINUTES } from "@/lib/scoring";
-import { Lock, Clock, CheckCircle2, Radio } from "lucide-react";
+import { formatKickoff, formatCountdown, isPredictionLocked } from "@/lib/scoring";
+import { Lock, Clock, CheckCircle2, Radio, TimerReset } from "lucide-react";
 import { usePredictions } from "@/context/PredictionsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Flag } from "@/components/Flag";
@@ -12,7 +12,9 @@ import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
 
 const statusConfig = {
   pending: { label: "Pendiente", color: "bg-secondary text-secondary-foreground", icon: Clock },
-  live: { label: "En juego", color: "bg-destructive/10 text-destructive border-destructive/30", icon: Radio },
+  starting: { label: "Iniciando", color: "bg-amber-100 text-amber-800 border-amber-200", icon: TimerReset },
+  live: { label: "En Desarrollo", color: "bg-destructive/10 text-destructive border-destructive/30", icon: Radio },
+  delayed: { label: "Atrasado", color: "bg-orange-100 text-orange-800 border-orange-200", icon: Clock },
   finished: { label: "Finalizado", color: "bg-muted text-muted-foreground", icon: CheckCircle2 },
 };
 
@@ -25,7 +27,6 @@ export function MatchCard({ match }: { match: Match }) {
   const participantsResolved = hasResolvedParticipants(match);
   const status = statusConfig[match.status];
   const StatusIcon = status.icon;
-  const mins = minutesUntilKickoff(match.kickoff);
 
   return (
     <Card className="group relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]">
@@ -86,18 +87,14 @@ export function MatchCard({ match }: { match: Match }) {
         <Button
           variant={locked ? "outline" : "default"}
           className="w-full"
-          disabled={isAdmin ? false : match.status === "finished" || !participantsResolved}
+          disabled={isAdmin ? false : locked || !participantsResolved}
         >
           {isAdmin ? (
             <>Gestionar partido</>
-          ) : match.status === "finished" ? (
-            <>Ver resultado</>
           ) : !participantsResolved ? (
             <>Esperando clasificados</>
           ) : locked ? (
-            <><Lock className="mr-2 h-4 w-4" />
-              {mins < 0 ? "Cerrado (en juego)" : `Cerrado (${PREDICTION_LOCK_MINUTES}min)`}
-            </>
+            <><Lock className="mr-2 h-4 w-4" /> Cerrado</>
           ) : prediction ? "Editar predicción" : "Hacer predicción"}
         </Button>
       </Link>

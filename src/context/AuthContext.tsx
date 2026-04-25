@@ -74,6 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (emailOrUser: string, password: string) => {
     try {
       const session = await api.auth.login(emailOrUser.trim(), password);
+      if (!session) {
+        return { ok: false, error: "No fue posible iniciar sesión" };
+      }
       setUser(toUser(session.user));
       await refreshUsers();
       return { ok: true };
@@ -85,6 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (name: string, email: string, password: string) => {
     try {
       const session = await api.auth.register(name.trim(), email.trim(), password);
+      if (!session) {
+        return { ok: false, error: "No fue posible crear la cuenta" };
+      }
       setUser(toUser(session.user));
       await refreshUsers();
       return { ok: true };

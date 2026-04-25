@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { MatchStatus, PredictionWinner } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { parseStoredScorer, scorersMatch } from "./scorer-entry";
 
 export const PREDICTION_LOCK_MINUTES = 60;
 export const WORLD_CUP_START_ISO = "2026-06-11T00:00:00.000Z";
@@ -14,8 +15,25 @@ export class ScoringService {
     return Math.floor((kickoff.getTime() - Date.now()) / 60000);
   }
 
-  isPredictionLocked(match: { kickoff: Date; status: MatchStatus }): boolean {
+  resolveMatchStatus(match: { kickoff: Date; status: MatchStatus }): MatchStatus {
     if (match.status !== MatchStatus.pending) {
+      return match.status;
+    }
+
+    const minutesUntilKickoff = this.minutesUntilKickoff(match.kickoff);
+    if (minutesUntilKickoff < 0) {
+      return MatchStatus.delayed;
+    }
+
+    if (minutesUntilKickoff < PREDICTION_LOCK_MINUTES) {
+      return MatchStatus.starting;
+    }
+
+    return MatchStatus.pending;
+  }
+
+  isPredictionLocked(match: { kickoff: Date; status: MatchStatus }): boolean {
+    if (this.resolveMatchStatus(match) !== MatchStatus.pending) {
       return true;
     }
 
@@ -55,10 +73,10 @@ export class ScoringService {
       points += 5;
     }
 
-    const remainingScorers = [...match.scorers.map((scorer) => scorer.name)];
+    const remainingScorers = [...match.scorers.map((scorer) => parseStoredScorer(scorer.name))];
     for (const scorer of prediction.scorers) {
       const scorerIndex = remainingScorers.findIndex(
-        (actualScorer) => actualScorer.trim().toLowerCase() === scorer.name.trim().toLowerCase(),
+        (actualScorer) => scorersMatch(actualScorer, parseStoredScorer(scorer.name)),
       );
 
       if (scorerIndex >= 0) {

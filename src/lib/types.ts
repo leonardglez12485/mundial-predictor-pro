@@ -1,11 +1,35 @@
-export type MatchStatus = "pending" | "live" | "finished";
+export type MatchStatus = "pending" | "starting" | "live" | "delayed" | "finished";
 export type UserRole = "admin" | "user";
+
+export interface MatchScorer {
+  name: string;
+  teamCode?: string;
+}
+
+export interface MatchResult {
+  homeGoals: number;
+  awayGoals: number;
+  scorers: string[];
+  homeScorers: string[];
+  awayScorers: string[];
+  scorerEntries: MatchScorer[];
+}
 
 export interface Team {
   code: string;        // ISO-2 country code (lowercase) e.g. "uy", "ar"
   name: string;
   flag: string;        // emoji fallback
   group?: string;
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+export interface TeamDetail extends Team {
+  players: Player[];
 }
 
 export interface Match {
@@ -16,7 +40,7 @@ export interface Match {
   status: MatchStatus;
   phase?: string;
   group?: string;
-  result?: { homeGoals: number; awayGoals: number; scorers: string[] };
+  result?: MatchResult;
 }
 
 export interface Prediction {

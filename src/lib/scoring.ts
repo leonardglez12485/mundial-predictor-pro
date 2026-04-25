@@ -1,4 +1,5 @@
 import type { Match, Prediction } from "./types";
+import { parseScorerEntry, scorerEntriesMatch } from "./scorer-entry";
 
 export const PREDICTION_LOCK_MINUTES = 60;
 
@@ -43,9 +44,11 @@ export function calculatePoints(prediction: Prediction, match: Match): number {
   if (prediction.winner === actualWinner) pts += 3;
   if (prediction.homeGoals === match.result.homeGoals && prediction.awayGoals === match.result.awayGoals) pts += 5;
 
-  const actualScorers = [...match.result.scorers];
+  const actualScorers = [...(match.result.scorerEntries.length > 0
+    ? match.result.scorerEntries
+    : match.result.scorers.map((name) => ({ name })))];
   for (const s of prediction.scorers) {
-    const idx = actualScorers.findIndex(a => a.toLowerCase().trim() === s.toLowerCase().trim());
+    const idx = actualScorers.findIndex((actualScorer) => scorerEntriesMatch(actualScorer, parseScorerEntry(s)));
     if (idx >= 0) {
       pts += 2;
       actualScorers.splice(idx, 1);

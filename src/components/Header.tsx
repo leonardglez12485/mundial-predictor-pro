@@ -6,7 +6,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, LogOut, KeyRound, LayoutDashboard, Medal, Star, Shield, CalendarDays } from "lucide-react";
+import { Trophy, LogOut, KeyRound, LayoutDashboard, Medal, Star, Shield, CalendarDays, Users, Flame } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
@@ -45,6 +45,8 @@ export function Header() {
   const isAdmin = user.role === "admin";
   const navItems = [
     { to: "/", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/teams", label: "Equipos", icon: Users },
+    { to: "/scorers", label: "Goleadores", icon: Flame },
     { to: "/calendar", label: "Calendario", icon: CalendarDays },
     ...(!isAdmin ? [{ to: "/special", label: "Mi pronóstico", icon: Star } as const] : []),
     { to: "/ranking", label: "Ranking", icon: Medal },
@@ -104,6 +106,8 @@ export function Header() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link to="/"><DropdownMenuItem><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</DropdownMenuItem></Link>
+              <Link to="/teams"><DropdownMenuItem><Users className="mr-2 h-4 w-4" />Equipos</DropdownMenuItem></Link>
+              <Link to="/scorers"><DropdownMenuItem><Flame className="mr-2 h-4 w-4" />Goleadores</DropdownMenuItem></Link>
               <Link to="/calendar"><DropdownMenuItem><CalendarDays className="mr-2 h-4 w-4" />Calendario</DropdownMenuItem></Link>
               {!isAdmin && <Link to="/special"><DropdownMenuItem><Star className="mr-2 h-4 w-4" />Mi pronóstico</DropdownMenuItem></Link>}
               <Link to="/ranking"><DropdownMenuItem><Medal className="mr-2 h-4 w-4" />Ranking</DropdownMenuItem></Link>

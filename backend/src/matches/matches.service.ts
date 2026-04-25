@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { MatchStatus } from "@prisma/client";
 import { PrismaService } from "../common/prisma/prisma.service";
+import { parseStoredScorer, serializeStoredScorer } from "../common/scoring/scorer-entry";
 import { ScoringService } from "../common/scoring/scoring.service";
 import { TeamsService } from "../teams/teams.service";
 import { CreateMatchDto } from "./dto/create-match.dto";
@@ -88,7 +89,18 @@ export class MatchesService {
   }
 
   async updateResult(id: string, dto: UpdateMatchResultDto) {
-    await this.findById(id);
+    const match = await this.findById(id);
+
+    const homeScorers = dto.homeScorers.map((scorer) => scorer.trim()).filter(Boolean);
+    const awayScorers = dto.awayScorers.map((scorer) => scorer.trim()).filter(Boolean);
+
+    if (homeScorers.length !== dto.homeGoals) {
+      throw new BadRequestException("La cantidad de goleadores del local debe coincidir con sus goles");
+    }
+
+    if (awayScorers.length !== dto.awayGoals) {
+      throw new BadRequestException("La cantidad de goleadores del visitante debe coincidir con sus goles");
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.match.update({
@@ -101,11 +113,16 @@ export class MatchesService {
       });
 
       await tx.matchScorer.deleteMany({ where: { matchId: id } });
-      if (dto.scorers.length > 0) {
+      if (homeScorers.length > 0 || awayScorers.length > 0) {
+        const serializedScorers = [
+          ...homeScorers.map((scorer) => serializeStoredScorer(match.homeTeam.code, scorer)),
+          ...awayScorers.map((scorer) => serializeStoredScorer(match.awayTeam.code, scorer)),
+        ];
+
         await tx.matchScorer.createMany({
-          data: dto.scorers.map((scorer, index) => ({
+          data: serializedScorers.map((scorer, index) => ({
             matchId: id,
-            name: scorer.trim(),
+            name: scorer,
             sortOrder: index,
           })),
         });
@@ -136,21 +153,63 @@ export class MatchesService {
     awayTeam: { code: string; name: string; flag: string; group?: string | null };
     scorers: { name: string }[];
   }) {
+    const result = this.toResultResponse(match);
+
     return {
       id: match.id,
       kickoff: match.kickoff.toISOString(),
-      status: match.status,
+      status: this.scoringService.resolveMatchStatus(match),
       phase: match.phase ?? undefined,
       group: match.group ?? undefined,
       home: this.teamsService.toTeamResponse(match.homeTeam),
       away: this.teamsService.toTeamResponse(match.awayTeam),
-      result: match.homeGoals === null || match.awayGoals === null
-        ? undefined
-        : {
-            homeGoals: match.homeGoals,
-            awayGoals: match.awayGoals,
-            scorers: match.scorers.map((scorer) => scorer.name),
-          },
+      result,
+    };
+  }
+
+  private toResultResponse(match: {
+    homeGoals: number | null;
+    awayGoals: number | null;
+    homeTeam: { code: string };
+    awayTeam: { code: string };
+    scorers: { name: string }[];
+  }) {
+    if (match.homeGoals === null || match.awayGoals === null) {
+      return undefined;
+    }
+
+    const parsedScorers = match.scorers.map((scorer) => parseStoredScorer(scorer.name));
+    const homeScorers = parsedScorers
+      .filter((scorer) => scorer.teamCode === match.homeTeam.code)
+      .map((scorer) => scorer.name);
+    const awayScorers = parsedScorers
+      .filter((scorer) => scorer.teamCode === match.awayTeam.code)
+      .map((scorer) => scorer.name);
+    const legacyScorers = parsedScorers
+      .filter((scorer) => scorer.teamCode !== match.homeTeam.code && scorer.teamCode !== match.awayTeam.code)
+      .map((scorer) => scorer.name);
+
+    while (homeScorers.length < match.homeGoals && legacyScorers.length > 0) {
+      homeScorers.push(legacyScorers.shift()!);
+    }
+
+    while (awayScorers.length < match.awayGoals && legacyScorers.length > 0) {
+      awayScorers.push(legacyScorers.shift()!);
+    }
+
+    const scorerEntries = [
+      ...homeScorers.map((name) => ({ name, teamCode: match.homeTeam.code })),
+      ...awayScorers.map((name) => ({ name, teamCode: match.awayTeam.code })),
+      ...legacyScorers.map((name) => ({ name })),
+    ];
+
+    return {
+      homeGoals: match.homeGoals,
+      awayGoals: match.awayGoals,
+      homeScorers,
+      awayScorers,
+      scorerEntries,
+      scorers: scorerEntries.map((scorer) => scorer.name),
     };
   }
 }

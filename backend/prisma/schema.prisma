@@ -14,7 +14,9 @@ enum UserRole {
 
 enum MatchStatus {
   pending
+  starting
   live
+  delayed
   finished
 }
 
@@ -45,11 +47,24 @@ model Team {
   name                        String
   flag                        String
   group                       String?
+  players                     Player[]
   homeMatches                 Match[]             @relation("HomeTeam")
   awayMatches                 Match[]             @relation("AwayTeam")
   championSpecialPredictions  SpecialPrediction[] @relation("ChampionTeam")
   finalHomeSpecialPredictions SpecialPrediction[] @relation("FinalHomeTeam")
   finalAwaySpecialPredictions SpecialPrediction[] @relation("FinalAwayTeam")
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  teamId    String
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
 }
 
 model Match {

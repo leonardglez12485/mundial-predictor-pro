@@ -9,18 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as SpecialRouteImport } from './routes/special'
+import { Route as ScorersRouteImport } from './routes/scorers'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TeamsTeamCodeRouteImport } from './routes/teams.$teamCode'
 import { Route as MatchMatchIdRouteImport } from './routes/match.$matchId'
 
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpecialRoute = SpecialRouteImport.update({
   id: '/special',
   path: '/special',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScorersRoute = ScorersRouteImport.update({
+  id: '/scorers',
+  path: '/scorers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -53,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamsTeamCodeRoute = TeamsTeamCodeRouteImport.update({
+  id: '/$teamCode',
+  path: '/$teamCode',
+  getParentRoute: () => TeamsRoute,
+} as any)
 const MatchMatchIdRoute = MatchMatchIdRouteImport.update({
   id: '/match/$matchId',
   path: '/match/$matchId',
@@ -66,8 +84,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/ranking': typeof RankingRoute
   '/register': typeof RegisterRoute
+  '/scorers': typeof ScorersRoute
   '/special': typeof SpecialRoute
+  '/teams': typeof TeamsRouteWithChildren
   '/match/$matchId': typeof MatchMatchIdRoute
+  '/teams/$teamCode': typeof TeamsTeamCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,8 +97,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/ranking': typeof RankingRoute
   '/register': typeof RegisterRoute
+  '/scorers': typeof ScorersRoute
   '/special': typeof SpecialRoute
+  '/teams': typeof TeamsRouteWithChildren
   '/match/$matchId': typeof MatchMatchIdRoute
+  '/teams/$teamCode': typeof TeamsTeamCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,8 +111,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/ranking': typeof RankingRoute
   '/register': typeof RegisterRoute
+  '/scorers': typeof ScorersRoute
   '/special': typeof SpecialRoute
+  '/teams': typeof TeamsRouteWithChildren
   '/match/$matchId': typeof MatchMatchIdRoute
+  '/teams/$teamCode': typeof TeamsTeamCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,8 +126,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/ranking'
     | '/register'
+    | '/scorers'
     | '/special'
+    | '/teams'
     | '/match/$matchId'
+    | '/teams/$teamCode'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -109,8 +139,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/ranking'
     | '/register'
+    | '/scorers'
     | '/special'
+    | '/teams'
     | '/match/$matchId'
+    | '/teams/$teamCode'
   id:
     | '__root__'
     | '/'
@@ -119,8 +152,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/ranking'
     | '/register'
+    | '/scorers'
     | '/special'
+    | '/teams'
     | '/match/$matchId'
+    | '/teams/$teamCode'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -130,17 +166,33 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RankingRoute: typeof RankingRoute
   RegisterRoute: typeof RegisterRoute
+  ScorersRoute: typeof ScorersRoute
   SpecialRoute: typeof SpecialRoute
+  TeamsRoute: typeof TeamsRouteWithChildren
   MatchMatchIdRoute: typeof MatchMatchIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/special': {
       id: '/special'
       path: '/special'
       fullPath: '/special'
       preLoaderRoute: typeof SpecialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scorers': {
+      id: '/scorers'
+      path: '/scorers'
+      fullPath: '/scorers'
+      preLoaderRoute: typeof ScorersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -185,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teams/$teamCode': {
+      id: '/teams/$teamCode'
+      path: '/$teamCode'
+      fullPath: '/teams/$teamCode'
+      preLoaderRoute: typeof TeamsTeamCodeRouteImport
+      parentRoute: typeof TeamsRoute
+    }
     '/match/$matchId': {
       id: '/match/$matchId'
       path: '/match/$matchId'
@@ -195,6 +254,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface TeamsRouteChildren {
+  TeamsTeamCodeRoute: typeof TeamsTeamCodeRoute
+}
+
+const TeamsRouteChildren: TeamsRouteChildren = {
+  TeamsTeamCodeRoute: TeamsTeamCodeRoute,
+}
+
+const TeamsRouteWithChildren = TeamsRoute._addFileChildren(TeamsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
@@ -202,7 +271,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RankingRoute: RankingRoute,
   RegisterRoute: RegisterRoute,
+  ScorersRoute: ScorersRoute,
   SpecialRoute: SpecialRoute,
+  TeamsRoute: TeamsRouteWithChildren,
   MatchMatchIdRoute: MatchMatchIdRoute,
 }
 export const routeTree = rootRouteImport

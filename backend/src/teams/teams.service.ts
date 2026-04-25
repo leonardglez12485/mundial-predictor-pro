@@ -1,5 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../common/prisma/prisma.service";
+import { CreatePlayerDto } from "./dto/create-player.dto";
+import { UpdatePlayerDto } from "./dto/update-player.dto";
 
 @Injectable()
 export class TeamsService {
@@ -16,12 +18,99 @@ export class TeamsService {
     return this.prisma.team.findUnique({ where: { code } });
   }
 
+  async findDetailByCode(code: string) {
+    const team = await this.prisma.team.findUnique({
+      where: { code },
+      include: {
+        players: {
+          orderBy: [{ active: "desc" }, { name: "asc" }],
+        },
+      },
+    });
+
+    if (!team || !team.group) {
+      throw new NotFoundException("Selección no encontrada");
+    }
+
+    return team;
+  }
+
+  async createPlayer(teamCode: string, dto: CreatePlayerDto) {
+    const team = await this.findDetailByCode(teamCode);
+    const name = dto.name.trim();
+
+    if (!name) {
+      throw new BadRequestException("El nombre del jugador es obligatorio");
+    }
+
+    const duplicate = team.players.find((player) => player.name.trim().toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+      throw new BadRequestException("Ese jugador ya existe en la selección");
+    }
+
+    return this.prisma.player.create({
+      data: {
+        teamId: team.id,
+        name,
+      },
+    });
+  }
+
+  async updatePlayer(teamCode: string, playerId: string, dto: UpdatePlayerDto) {
+    const team = await this.findDetailByCode(teamCode);
+    const player = team.players.find((currentPlayer) => currentPlayer.id === playerId);
+
+    if (!player) {
+      throw new NotFoundException("Jugador no encontrado en esta selección");
+    }
+
+    const name = dto.name?.trim();
+    if (name) {
+      const duplicate = team.players.find((currentPlayer) =>
+        currentPlayer.id !== playerId && currentPlayer.name.trim().toLowerCase() === name.toLowerCase(),
+      );
+
+      if (duplicate) {
+        throw new BadRequestException("Ese jugador ya existe en la selección");
+      }
+    }
+
+    return this.prisma.player.update({
+      where: { id: playerId },
+      data: {
+        name: name ?? undefined,
+        active: dto.active,
+      },
+    });
+  }
+
   toTeamResponse(team: { code: string; name: string; flag: string; group?: string | null }) {
     return {
       code: team.code,
       name: team.name,
       flag: team.flag,
       group: team.group ?? undefined,
+    };
+  }
+
+  toPlayerResponse(player: { id: string; name: string; active: boolean }) {
+    return {
+      id: player.id,
+      name: player.name,
+      active: player.active,
+    };
+  }
+
+  toTeamDetailResponse(team: {
+    code: string;
+    name: string;
+    flag: string;
+    group?: string | null;
+    players: { id: string; name: string; active: boolean }[];
+  }) {
+    return {
+      ...this.toTeamResponse(team),
+      players: team.players.map((player) => this.toPlayerResponse(player)),
     };
   }
 }

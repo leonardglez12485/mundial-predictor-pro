@@ -15,7 +15,7 @@ interface PredictionsState {
   saveSpecialPrediction: (p: SpecialPrediction) => Promise<void>;
   // Admin
   addMatch: (m: Match) => Promise<void>;
-  updateMatchResult: (id: string, result: { homeGoals: number; awayGoals: number; scorers: string[] }) => Promise<void>;
+  updateMatchResult: (id: string, result: { homeGoals: number; awayGoals: number; homeScorers: string[]; awayScorers: string[] }) => Promise<void>;
   setMatchStatus: (id: string, status: Match["status"]) => Promise<void>;
   deleteMatch: (id: string) => Promise<void>;
 }

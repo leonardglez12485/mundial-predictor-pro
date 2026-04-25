@@ -53,7 +53,7 @@ function Dashboard() {
         { label: "Partidos hoy", value: todayMatches.length, icon: CalendarDays, color: "from-primary to-primary-glow" },
         { label: "Partidos totales", value: matches.length, icon: Target, color: "from-primary-deep to-primary" },
         { label: "Finalizados", value: matches.filter((match) => match.status === "finished").length, icon: Trophy, color: "from-primary to-primary-deep" },
-        { label: "En juego", value: matches.filter((match) => match.status === "live").length, icon: TrendingUp, color: "from-primary-glow to-primary" },
+        { label: "En Desarrollo", value: matches.filter((match) => match.status === "live" || match.status === "starting").length, icon: TrendingUp, color: "from-primary-glow to-primary" },
       ]
     : [
         { label: "Partidos hoy", value: todayMatches.length, icon: CalendarDays, color: "from-primary to-primary-glow" },
@@ -103,7 +103,7 @@ function Dashboard() {
             </div>
             <div className="min-w-[200px] flex-1">
               <div className="font-bold">¡Hacé tu pronóstico del Mundial!</div>
-              <div className="text-sm text-white/90">Campeón, goleador y final. Tiempo restante: {timeUntilSpecialDeadline()}</div>
+              <div className="text-sm text-[#081a2b]/82">Campeón, goleador y final. Tiempo restante: {timeUntilSpecialDeadline()}</div>
             </div>
             <Link to="/special">
               <Button variant="secondary" className="font-semibold">

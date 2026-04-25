@@ -60,7 +60,7 @@ function Ranking() {
                   <div className="text-xs text-muted-foreground">{u.points} pts</div>
                 </div>
                 <div className={`flex w-full ${style.height} items-start justify-center rounded-t-xl bg-gradient-to-b ${style.color} pt-3 shadow-[var(--shadow-soft)]`}>
-                  <span className="text-2xl font-black text-white drop-shadow">{style.label}</span>
+                  <span className="text-2xl font-black text-[#081a2b] drop-shadow">{style.label}</span>
                 </div>
               </div>
             );

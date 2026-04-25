@@ -1,4 +1,4 @@
-import type { Match, Prediction, SpecialPrediction, Team, User } from "@/lib/types";
+import type { Match, Player, Prediction, SpecialPrediction, Team, TeamDetail, User } from "@/lib/types";
 
 export type PublicUser = Omit<User, "password">;
 export type RankingEntry = PublicUser & { rank: number };
@@ -212,6 +212,21 @@ export const api = {
     list() {
       return request<Team[]>("/teams", { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
     },
+    detail(code: string) {
+      return request<TeamDetail>(`/teams/${code}`, { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
+    },
+    createPlayer(code: string, name: string) {
+      return request<Player>(`/teams/${code}/players`, {
+        method: "POST",
+        body: { name } as unknown as BodyInit,
+      });
+    },
+    updatePlayer(code: string, playerId: string, input: { name?: string; active?: boolean }) {
+      return request<Player>(`/teams/${code}/players/${playerId}`, {
+        method: "PATCH",
+        body: input as unknown as BodyInit,
+      });
+    },
   },
   matches: {
     list() {
@@ -229,7 +244,7 @@ export const api = {
         body: { status } as unknown as BodyInit,
       });
     },
-    updateResult(id: string, result: { homeGoals: number; awayGoals: number; scorers: string[] }) {
+    updateResult(id: string, result: { homeGoals: number; awayGoals: number; homeScorers: string[]; awayScorers: string[] }) {
       return request<Match>(`/matches/${id}/result`, {
         method: "PATCH",
         body: result as unknown as BodyInit,

@@ -67,6 +67,7 @@ function calculatePoints(prediction: {
 }
 
 async function main() {
+  await prisma.player.deleteMany();
   await prisma.predictionScorer.deleteMany();
   await prisma.prediction.deleteMany();
   await prisma.matchScorer.deleteMany();

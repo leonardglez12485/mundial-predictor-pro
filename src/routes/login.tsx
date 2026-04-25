@@ -75,7 +75,7 @@ function LoginPage() {
                   />
                 </div>
                 <div className="pointer-events-none absolute left-6 top-5 h-1.5 w-24 rounded-full bg-white/85" />
-                <div className="absolute right-4 top-14 rounded-2xl bg-[#4f8fb7] px-4 py-2 text-sm font-bold text-white shadow-[0_12px_24px_rgba(8,26,43,0.16)]">
+                <div className="absolute right-4 top-14 rounded-2xl bg-[#4f8fb7] px-4 py-2 text-sm font-bold text-[#081a2b] shadow-[0_12px_24px_rgba(8,26,43,0.16)]">
                   16:45
                 </div>
                 <div className="absolute -bottom-5 left-7 rounded-[1.5rem] border border-white/80 bg-white/92 px-5 py-3 text-sm font-semibold text-[#12304a] shadow-[0_18px_40px_rgba(8,26,43,0.14)]">
@@ -140,7 +140,7 @@ function LoginPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="h-12 w-full rounded-2xl bg-[#2386c8] text-base font-bold text-white shadow-[0_20px_40px_rgba(35,134,200,0.28)] transition-all hover:bg-[#1d76b0]"
+                  className="h-12 w-full rounded-2xl bg-[#2386c8] text-base font-bold text-[#081a2b] shadow-[0_20px_40px_rgba(35,134,200,0.28)] transition-all hover:bg-[#1d76b0]"
                 >
                   {loading ? "Ingresando..." : "Iniciar sesión"}
                 </Button>

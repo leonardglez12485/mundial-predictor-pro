@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
+import { parseStoredScorer, serializeStoredScorer } from "../common/scoring/scorer-entry";
 import { PrismaService } from "../common/prisma/prisma.service";
 import { ScoringService } from "../common/scoring/scoring.service";
 import { MatchesService } from "../matches/matches.service";
@@ -37,6 +38,34 @@ export class PredictionsService {
       throw new ForbiddenException("La predicción ya está cerrada para este partido");
     }
 
+    const parsedScorers = dto.scorers.map((scorer) => parseStoredScorer(scorer)).filter((scorer) => scorer.name);
+    const homeScorers = parsedScorers
+      .filter((scorer) => scorer.teamCode === match.homeTeam.code)
+      .map((scorer) => scorer.name);
+    const awayScorers = parsedScorers
+      .filter((scorer) => scorer.teamCode === match.awayTeam.code)
+      .map((scorer) => scorer.name);
+    const legacyScorers = parsedScorers
+      .filter((scorer) => scorer.teamCode !== match.homeTeam.code && scorer.teamCode !== match.awayTeam.code)
+      .map((scorer) => scorer.name);
+
+    while (homeScorers.length < dto.homeGoals && legacyScorers.length > 0) {
+      homeScorers.push(legacyScorers.shift()!);
+    }
+
+    while (awayScorers.length < dto.awayGoals && legacyScorers.length > 0) {
+      awayScorers.push(legacyScorers.shift()!);
+    }
+
+    if (homeScorers.length !== dto.homeGoals || awayScorers.length !== dto.awayGoals) {
+      throw new BadRequestException("La cantidad de goleadores debe coincidir con los goles de cada equipo");
+    }
+
+    const serializedScorers = [
+      ...homeScorers.map((scorer) => serializeStoredScorer(match.homeTeam.code, scorer)),
+      ...awayScorers.map((scorer) => serializeStoredScorer(match.awayTeam.code, scorer)),
+    ];
+
     await this.prisma.$transaction(async (tx) => {
       const existingPrediction = await tx.prediction.findUnique({
         where: { matchId_userId: { matchId, userId } },
@@ -53,9 +82,9 @@ export class PredictionsService {
         });
 
         await tx.predictionScorer.deleteMany({ where: { predictionId: existingPrediction.id } });
-        if (dto.scorers.length > 0) {
+        if (serializedScorers.length > 0) {
           await tx.predictionScorer.createMany({
-            data: dto.scorers.map((scorer, index) => ({
+            data: serializedScorers.map((scorer, index) => ({
               predictionId: existingPrediction.id,
               name: scorer.trim(),
               sortOrder: index,
@@ -71,7 +100,7 @@ export class PredictionsService {
             homeGoals: dto.homeGoals,
             awayGoals: dto.awayGoals,
             scorers: {
-              create: dto.scorers.map((scorer, index) => ({ name: scorer.trim(), sortOrder: index })),
+              create: serializedScorers.map((scorer, index) => ({ name: scorer.trim(), sortOrder: index })),
             },
           },
         });
