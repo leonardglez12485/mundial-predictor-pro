@@ -1,5 +1,7 @@
 const MATCH_SCORER_SEPARATOR = "::";
 
+export const OWN_GOAL_SCORER_NAME = "Autogol";
+
 export interface ScorerEntry {
   name: string;
   teamCode?: string;

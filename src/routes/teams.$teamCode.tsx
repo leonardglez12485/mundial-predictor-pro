@@ -21,7 +21,12 @@ import type { Player, PlayerPosition, TeamDetail } from "@/lib/types";
 
 const PLAYER_POSITIONS: PlayerPosition[] = ["P", "DEF", "MED", "DEL"];
 const PLAYER_POSITION_ORDER: Record<PlayerPosition, number> = { P: 0, DEF: 1, MED: 2, DEL: 3 };
-type PlayerDraft = { name: string; position: PlayerPosition };
+type PlayerDraft = {
+  name: string;
+  position: PlayerPosition;
+  shirtNumber: string;
+  club: string;
+};
 
 export const Route = createFileRoute("/teams/$teamCode")({
   head: () => ({ meta: [{ title: "Plantel de selección — Balero World Cup" }] }),
@@ -44,6 +49,8 @@ function TeamDetailView() {
   const [submitting, setSubmitting] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerPosition, setNewPlayerPosition] = useState<PlayerPosition>("MED");
+  const [newPlayerShirtNumber, setNewPlayerShirtNumber] = useState("");
+  const [newPlayerClub, setNewPlayerClub] = useState("");
   const [playerDrafts, setPlayerDrafts] = useState<Record<string, PlayerDraft>>({});
 
   useEffect(() => {
@@ -80,8 +87,15 @@ function TeamDetailView() {
   const handleCreatePlayer = async (event: React.FormEvent) => {
     event.preventDefault();
     const trimmedName = newPlayerName.trim();
+    const shirtNumber = parseOptionalShirtNumber(newPlayerShirtNumber);
+    const trimmedClub = newPlayerClub.trim();
+
     if (!trimmedName) {
       return toast.error("Ingresá el nombre del jugador");
+    }
+
+    if (shirtNumber === "invalid") {
+      return toast.error("Ingresá un dorsal válido");
     }
 
     setSubmitting(true);
@@ -89,6 +103,8 @@ function TeamDetailView() {
       const player = await api.teams.createPlayer(teamCode, {
         name: trimmedName,
         position: newPlayerPosition,
+        ...(shirtNumber !== null ? { shirtNumber } : {}),
+        ...(trimmedClub ? { club: trimmedClub } : {}),
       });
       setTeam((currentTeam) => {
         if (!currentTeam) {
@@ -104,6 +120,8 @@ function TeamDetailView() {
       });
       setNewPlayerName("");
       setNewPlayerPosition("MED");
+      setNewPlayerShirtNumber("");
+      setNewPlayerClub("");
       toast.success("Jugador agregado al catálogo provisorio");
     } catch (error) {
       toast.error(readApiError(error, "No fue posible agregar el jugador"));
@@ -147,12 +165,26 @@ function TeamDetailView() {
     }
 
     const trimmedName = draft.name.trim();
+    const shirtNumber = parseOptionalShirtNumber(draft.shirtNumber);
+    const trimmedClub = draft.club.trim();
+    const currentClub = player.club?.trim() ?? "";
+
     if (!trimmedName) {
       toast.error("El nombre del jugador es obligatorio");
       return;
     }
 
-    if (trimmedName === player.name && draft.position === player.position) {
+    if (shirtNumber === "invalid") {
+      toast.error("Ingresá un dorsal válido");
+      return;
+    }
+
+    if (
+      trimmedName === player.name &&
+      draft.position === player.position &&
+      shirtNumber === (player.shirtNumber ?? null) &&
+      trimmedClub === currentClub
+    ) {
       return;
     }
 
@@ -161,6 +193,8 @@ function TeamDetailView() {
       const updatedPlayer = await api.teams.updatePlayer(teamCode, player.id, {
         name: trimmedName,
         position: draft.position,
+        shirtNumber,
+        club: trimmedClub || null,
       });
 
       setTeam((currentTeam) => {
@@ -229,8 +263,8 @@ function TeamDetailView() {
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
             <UserPlus className="h-4 w-4 text-primary" /> Administrar plantel provisorio
           </div>
-          <form onSubmit={handleCreatePlayer} className="flex flex-col gap-3 md:flex-row">
-            <div className="flex-1">
+          <form onSubmit={handleCreatePlayer} className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_120px_110px_minmax(0,1fr)_140px] md:items-end">
+            <div>
               <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
                 Nombre
               </Label>
@@ -242,7 +276,7 @@ function TeamDetailView() {
                 disabled={submitting}
               />
             </div>
-            <div className="md:w-40">
+            <div>
               <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
                 Posición
               </Label>
@@ -262,10 +296,35 @@ function TeamDetailView() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
+                Dorsal
+              </Label>
+              <Input
+                value={newPlayerShirtNumber}
+                onChange={(event) => setNewPlayerShirtNumber(event.target.value)}
+                placeholder="-"
+                inputMode="numeric"
+                className="h-9"
+                disabled={submitting}
+              />
+            </div>
+            <div>
+              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
+                Club
+              </Label>
+              <Input
+                value={newPlayerClub}
+                onChange={(event) => setNewPlayerClub(event.target.value)}
+                placeholder="Club actual"
+                className="h-9"
+                disabled={submitting}
+              />
+            </div>
             <Button
               type="submit"
               disabled={submitting}
-              className="h-9 w-full justify-center bg-[var(--gradient-primary)] md:w-40"
+              className="h-9 w-full justify-center bg-[var(--gradient-primary)]"
             >
               <UserPlus className="mr-2 h-4 w-4" /> Agregar jugador
             </Button>
@@ -299,10 +358,7 @@ function TeamDetailView() {
                   <section key={position} className="border-t first:border-t-0">
                     <div className="divide-y">
                       {playersInPosition.map((player) => {
-                      const draft = playerDrafts[player.id] ?? {
-                        name: player.name,
-                        position: player.position,
-                      };
+                      const draft = playerDrafts[player.id] ?? createPlayerDraft(player);
                       const shirtNumber = formatShirtNumber(player.shirtNumber);
                       const club = formatPlayerClub(player.club);
 
@@ -311,9 +367,26 @@ function TeamDetailView() {
                           key={player.id}
                           className="grid grid-cols-[56px_minmax(0,1fr)_minmax(0,150px)] items-center gap-3 px-3 py-1.5 sm:px-4"
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-secondary/55 font-mono text-[11px] font-semibold text-foreground">
-                            {shirtNumber}
-                          </div>
+                          {isAdmin ? (
+                            <Input
+                              value={draft.shirtNumber}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                setPlayerDrafts((currentDrafts) => ({
+                                  ...currentDrafts,
+                                  [player.id]: { ...draft, shirtNumber: value },
+                                }));
+                              }}
+                              disabled={submitting}
+                              inputMode="numeric"
+                              placeholder="-"
+                              className="h-8 text-center font-mono text-xs"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-secondary/55 font-mono text-[11px] font-semibold text-foreground">
+                              {shirtNumber}
+                            </div>
+                          )}
                           <div className="min-w-0">
                             {isAdmin ? (
                               <div className="grid gap-1 md:grid-cols-[minmax(0,1fr)_88px]">
@@ -362,9 +435,25 @@ function TeamDetailView() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="truncate text-[11px] font-semibold text-foreground sm:text-xs">
-                              {club}
-                            </div>
+                            {isAdmin ? (
+                              <Input
+                                value={draft.club}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  setPlayerDrafts((currentDrafts) => ({
+                                    ...currentDrafts,
+                                    [player.id]: { ...draft, club: value },
+                                  }));
+                                }}
+                                disabled={submitting}
+                                placeholder="Club actual"
+                                className="h-8 text-xs"
+                              />
+                            ) : (
+                              <div className="truncate text-[11px] font-semibold text-foreground sm:text-xs">
+                                {club}
+                              </div>
+                            )}
                           </div>
                           {isAdmin && (
                             <div className="col-span-3 flex flex-wrap items-center justify-end gap-2 pt-1">
@@ -433,9 +522,30 @@ function sortTeamPlayers(team: TeamDetail): TeamDetail {
 }
 
 function createDraftMap(players: Player[]) {
-  return Object.fromEntries(
-    players.map((player) => [player.id, { name: player.name, position: player.position }]),
-  );
+  return Object.fromEntries(players.map((player) => [player.id, createPlayerDraft(player)]));
+}
+
+function createPlayerDraft(player: Player): PlayerDraft {
+  return {
+    name: player.name,
+    position: player.position,
+    shirtNumber: player.shirtNumber?.toString() ?? "",
+    club: player.club ?? "",
+  };
+}
+
+function parseOptionalShirtNumber(value: string): number | null | "invalid" {
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!/^\d+$/.test(normalizedValue)) {
+    return "invalid";
+  }
+
+  return Number(normalizedValue);
 }
 
 function formatShirtNumber(shirtNumber?: number) {

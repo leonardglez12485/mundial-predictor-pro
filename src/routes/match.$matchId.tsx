@@ -5,7 +5,12 @@ import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { usePredictions } from "@/context/PredictionsContext";
 import { api, readApiError } from "@/lib/api";
-import { parseScorerEntry, serializeScorerEntry, splitScorerSelections } from "@/lib/scorer-entry";
+import {
+  OWN_GOAL_SCORER_NAME,
+  parseScorerEntry,
+  serializeScorerEntry,
+  splitScorerSelections,
+} from "@/lib/scorer-entry";
 import { isPredictionLocked, formatKickoff, formatCountdown, calculatePoints } from "@/lib/scoring";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -296,10 +301,10 @@ function LoadedPredictionForm({
                       setHomeGoals(nextGoals);
                       setHomeScorers((prev) => resizeScorerList(prev, nextGoals));
                     }}
-                    className="h-16 text-center text-3xl font-bold sm:h-20 sm:text-4xl"
+                    className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
                   />
                 </div>
-                <div className="text-2xl font-bold text-muted-foreground sm:text-3xl">-</div>
+                <div className="text-xl font-bold text-muted-foreground sm:text-2xl">-</div>
                 <div className="space-y-1.5">
                   <div className="text-center text-xs text-muted-foreground">{match.away.name}</div>
                   <Input
@@ -312,7 +317,7 @@ function LoadedPredictionForm({
                       setAwayGoals(nextGoals);
                       setAwayScorers((prev) => resizeScorerList(prev, nextGoals));
                     }}
-                    className="h-16 text-center text-3xl font-bold sm:h-20 sm:text-4xl"
+                    className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
                   />
                 </div>
               </div>
@@ -330,6 +335,9 @@ function LoadedPredictionForm({
 
             <div>
               <Label className="mb-3 block text-base font-semibold">Goleadores</Label>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Si el gol es en contra, elegí <span className="font-semibold text-foreground">{OWN_GOAL_SCORER_NAME}</span>.
+              </p>
               <div className="grid gap-4 md:grid-cols-2">
                 <PredictionScorerSection
                   team={match.home}
@@ -485,10 +493,14 @@ function buildPredictionPlayerOptions(
   players: Player[],
   selectedScorers: string[],
 ) {
+  const ownGoalValue = serializeScorerEntry(teamCode, OWN_GOAL_SCORER_NAME);
   const activeOptionMap = new Map(
-    players
-      .filter((player) => player.active)
-      .map((player) => [serializeScorerEntry(teamCode, player.name), player.name]),
+    [
+      [ownGoalValue, OWN_GOAL_SCORER_NAME],
+      ...players
+        .filter((player) => player.active)
+        .map((player) => [serializeScorerEntry(teamCode, player.name), player.name]),
+    ],
   );
   const optionValues = Array.from(
     new Set([...activeOptionMap.keys(), ...selectedScorers.filter(Boolean)]),
