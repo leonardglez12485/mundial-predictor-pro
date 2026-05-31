@@ -15,7 +15,8 @@
     "teams:import": "tsx prisma/import-world-cup-groups.ts",
     "schedule:import": "tsx prisma/import-world-cup-schedule.ts",
     "rosters:import": "tsx prisma/import-team-rosters.ts",
-    "seed": "npm run prisma:seed"
+    "seed": "npm run prisma:seed",
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

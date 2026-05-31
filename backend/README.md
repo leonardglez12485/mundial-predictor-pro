@@ -27,7 +27,7 @@ cd backend
 npm install
 npm run prisma:generate
 npx prisma migrate dev --name init
-npm run seed
+npm run seed -- --confirm-reset
 npm run start:dev
 ```
 
@@ -40,6 +40,10 @@ npm run start
 
 Eso levanta frontend + backend juntos usando la base SQLite local ya configurada.
 Si el backend ya está corriendo en el puerto 3001, el comando lo reutiliza y no intenta levantar otro.
+
+`seed` elimina todos los datos existentes y requiere `--confirm-reset`. La importación completa del
+calendario reemplaza los partidos existentes y requiere
+`npm run schedule:import -- --confirm-replace-matches`.
 
 ## Variables de entorno
 
@@ -65,6 +69,7 @@ SWAGGER_ENABLED=true
 - `GET /api/matches`
 - `POST /api/matches` admin
 - `PATCH /api/matches/:id/status` admin
+- `PATCH /api/matches/:id/participants` admin, para resolver cruces eliminatorios pendientes
 - `PATCH /api/matches/:id/result` admin
 - `DELETE /api/matches/:id` admin
 - `GET /api/predictions/me`

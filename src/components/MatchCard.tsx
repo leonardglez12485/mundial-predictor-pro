@@ -12,9 +12,21 @@ import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
 
 const statusConfig = {
   pending: { label: "Pendiente", color: "bg-secondary text-secondary-foreground", icon: Clock },
-  starting: { label: "Iniciando", color: "bg-amber-100 text-amber-800 border-amber-200", icon: TimerReset },
-  live: { label: "En Desarrollo", color: "bg-destructive/10 text-destructive border-destructive/30", icon: Radio },
-  delayed: { label: "Atrasado", color: "bg-orange-100 text-orange-800 border-orange-200", icon: Clock },
+  starting: {
+    label: "Iniciando",
+    color: "bg-amber-100 text-amber-800 border-amber-200",
+    icon: TimerReset,
+  },
+  live: {
+    label: "En Desarrollo",
+    color: "bg-destructive/10 text-destructive border-destructive/30",
+    icon: Radio,
+  },
+  delayed: {
+    label: "Atrasado",
+    color: "bg-orange-100 text-orange-800 border-orange-200",
+    icon: Clock,
+  },
   finished: { label: "Finalizado", color: "bg-muted text-muted-foreground", icon: CheckCircle2 },
 };
 
@@ -29,10 +41,10 @@ export function MatchCard({ match }: { match: Match }) {
   const StatusIcon = status.icon;
 
   return (
-    <Card className="group relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]">
+    <Card className="group relative overflow-hidden p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)] sm:p-6">
       <div className="absolute inset-x-0 top-0 h-1 bg-[var(--gradient-primary)] opacity-0 transition-opacity group-hover:opacity-100" />
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <Badge variant="outline" className={`${status.color} gap-1.5 font-medium`}>
           <StatusIcon className="h-3 w-3" />
           {status.label}
@@ -40,24 +52,31 @@ export function MatchCard({ match }: { match: Match }) {
         <span className="text-xs font-medium text-muted-foreground">{formatMatchStage(match)}</span>
       </div>
 
-      <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="flex flex-col items-center text-center">
-          <Flag team={match.home} size={36} className="mb-2" />
-          <div className="text-sm font-semibold">{match.home.name}</div>
+      <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 flex-col items-center text-center">
+          <Flag team={match.home} size={34} className="mb-2 sm:h-9 sm:w-9" />
+          <div className="max-w-full truncate text-xs font-semibold sm:text-sm">
+            {match.home.name}
+          </div>
         </div>
-        <div className="flex flex-col items-center">
+        <div className="flex min-w-[72px] flex-col items-center">
           {match.result ? (
-            <div className="text-2xl font-bold tabular-nums">
-              {match.result.homeGoals} <span className="text-muted-foreground">-</span> {match.result.awayGoals}
+            <div className="text-xl font-bold tabular-nums sm:text-2xl">
+              {match.result.homeGoals} <span className="text-muted-foreground">-</span>{" "}
+              {match.result.awayGoals}
             </div>
           ) : (
-            <div className="text-xl font-bold text-muted-foreground">VS</div>
+            <div className="text-lg font-bold text-muted-foreground sm:text-xl">VS</div>
           )}
-          <div className="mt-1 text-xs text-muted-foreground">{formatKickoff(match.kickoff)}</div>
+          <div className="mt-1 text-center text-[11px] text-muted-foreground sm:text-xs">
+            {formatKickoff(match.kickoff)}
+          </div>
         </div>
-        <div className="flex flex-col items-center text-center">
-          <Flag team={match.away} size={36} className="mb-2" />
-          <div className="text-sm font-semibold">{match.away.name}</div>
+        <div className="flex min-w-0 flex-col items-center text-center">
+          <Flag team={match.away} size={34} className="mb-2 sm:h-9 sm:w-9" />
+          <div className="max-w-full truncate text-xs font-semibold sm:text-sm">
+            {match.away.name}
+          </div>
         </div>
       </div>
 
@@ -83,7 +102,10 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
       )}
 
-      <Link to={isAdmin ? "/admin" : "/match/$matchId"} params={isAdmin ? undefined : { matchId: match.id }}>
+      <Link
+        to={isAdmin ? "/admin" : "/match/$matchId"}
+        params={isAdmin ? undefined : { matchId: match.id }}
+      >
         <Button
           variant={locked ? "outline" : "default"}
           className="w-full"
@@ -94,8 +116,14 @@ export function MatchCard({ match }: { match: Match }) {
           ) : !participantsResolved ? (
             <>Esperando clasificados</>
           ) : locked ? (
-            <><Lock className="mr-2 h-4 w-4" /> Cerrado</>
-          ) : prediction ? "Editar predicción" : "Hacer predicción"}
+            <>
+              <Lock className="mr-2 h-4 w-4" /> Cerrado
+            </>
+          ) : prediction ? (
+            "Editar predicción"
+          ) : (
+            "Hacer predicción"
+          )}
         </Button>
       </Link>
     </Card>

@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../common/prisma/prisma.service";
 import { ScoringService } from "../common/scoring/scoring.service";
 import { TeamsService } from "../teams/teams.service";
@@ -30,6 +35,15 @@ export class SpecialPredictionsService {
       throw new ForbiddenException("Las predicciones especiales ya están cerradas");
     }
 
+    const topScorer = dto.topScorer.trim();
+    if (!topScorer) {
+      throw new BadRequestException("El goleador del torneo es obligatorio");
+    }
+
+    if (dto.finalHomeCode === dto.finalAwayCode) {
+      throw new BadRequestException("Los dos finalistas deben ser distintos");
+    }
+
     const [championTeam, finalHomeTeam, finalAwayTeam] = await Promise.all([
       this.teamsService.findByCode(dto.championCode),
       this.teamsService.findByCode(dto.finalHomeCode),
@@ -44,7 +58,7 @@ export class SpecialPredictionsService {
       where: { userId },
       update: {
         championTeamId: championTeam.id,
-        topScorer: dto.topScorer.trim(),
+        topScorer,
         finalHomeTeamId: finalHomeTeam.id,
         finalAwayTeamId: finalAwayTeam.id,
         finalHomeGoals: dto.finalHomeGoals,
@@ -53,7 +67,7 @@ export class SpecialPredictionsService {
       create: {
         userId,
         championTeamId: championTeam.id,
-        topScorer: dto.topScorer.trim(),
+        topScorer,
         finalHomeTeamId: finalHomeTeam.id,
         finalAwayTeamId: finalAwayTeam.id,
         finalHomeGoals: dto.finalHomeGoals,

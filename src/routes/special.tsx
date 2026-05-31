@@ -3,17 +3,30 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { usePredictions } from "@/context/PredictionsContext";
-import { isSpecialPredictionLocked, isWorldCupStarted, timeUntilSpecialDeadline } from "@/lib/scoring";
+import {
+  isSpecialPredictionLocked,
+  isWorldCupStarted,
+  timeUntilSpecialDeadline,
+} from "@/lib/scoring";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Flag } from "@/components/Flag";
 import { Star, Lock, Trophy, Save, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { createTeamMap, groupTeams } from "@/lib/teams";
+import type { SpecialPrediction, Team, User } from "@/lib/types";
 
 export const Route = createFileRoute("/special")({
   head: () => ({ meta: [{ title: "Mi pronóstico — Balero World Cup" }] }),
@@ -34,46 +47,75 @@ function SpecialPage() {
 function SpecialForm() {
   const { user } = useAuth();
   const { teams, getSpecialPrediction, saveSpecialPrediction, loading } = usePredictions();
-  const navigate = useNavigate();
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <Card className="p-10 text-center text-muted-foreground">Cargando tu pronóstico actual...</Card>
+      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+        <Card className="p-6 text-center text-muted-foreground sm:p-10">
+          Cargando tu pronóstico actual...
+        </Card>
       </main>
     );
   }
 
-  const existing = user ? getSpecialPrediction(user.id) : undefined;
+  if (!user) return null;
+
+  if (user.role === "admin") {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+        <Link
+          to="/admin"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Volver al panel admin
+        </Link>
+
+        <Card className="p-6 text-center sm:p-10">
+          <h1 className="text-xl font-bold sm:text-2xl">
+            Pronóstico no disponible para administradores
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Esta cuenta solo gestiona partidos, resultados y goleadores.
+          </p>
+        </Card>
+      </main>
+    );
+  }
+
+  const existing = getSpecialPrediction(user.id);
+  return (
+    <LoadedSpecialForm
+      key={existing?.updatedAt ?? "new"}
+      user={user}
+      teams={teams}
+      existing={existing}
+      saveSpecialPrediction={saveSpecialPrediction}
+    />
+  );
+}
+
+function LoadedSpecialForm({
+  user,
+  teams,
+  existing,
+  saveSpecialPrediction,
+}: {
+  user: User;
+  teams: Team[];
+  existing: SpecialPrediction | undefined;
+  saveSpecialPrediction: (prediction: SpecialPrediction) => Promise<void>;
+}) {
+  const navigate = useNavigate();
   const locked = isSpecialPredictionLocked();
   const started = isWorldCupStarted();
-
   const groupedTeams = groupTeams(teams);
   const teamMap = createTeamMap(teams);
-
   const [championCode, setChampionCode] = useState(existing?.championCode ?? "");
   const [topScorer, setTopScorer] = useState(existing?.topScorer ?? "");
   const [finalHomeCode, setFinalHomeCode] = useState(existing?.finalHomeCode ?? "");
   const [finalAwayCode, setFinalAwayCode] = useState(existing?.finalAwayCode ?? "");
   const [finalHomeGoals, setFinalHomeGoals] = useState<number>(existing?.finalHomeGoals ?? 1);
   const [finalAwayGoals, setFinalAwayGoals] = useState<number>(existing?.finalAwayGoals ?? 0);
-
-  if (!user) return null;
-
-  if (user.role === "admin") {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <Link to="/admin" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Volver al panel admin
-        </Link>
-
-        <Card className="p-10 text-center">
-          <h1 className="text-2xl font-bold">Pronóstico no disponible para administradores</h1>
-          <p className="mt-2 text-muted-foreground">Esta cuenta solo gestiona partidos, resultados y goleadores.</p>
-        </Card>
-      </main>
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,9 +128,12 @@ function SpecialForm() {
     }
     await saveSpecialPrediction({
       userId: user.id,
-      championCode, topScorer: topScorer.trim(),
-      finalHomeCode, finalAwayCode,
-      finalHomeGoals, finalAwayGoals,
+      championCode,
+      topScorer: topScorer.trim(),
+      finalHomeCode,
+      finalAwayCode,
+      finalHomeGoals,
+      finalAwayGoals,
       updatedAt: new Date().toISOString(),
     });
     toast.success(existing ? "Pronóstico actualizado" : "¡Pronóstico guardado!");
@@ -96,18 +141,21 @@ function SpecialForm() {
   };
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+      <Link
+        to="/"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Volver al dashboard
       </Link>
 
-      <Card className="overflow-hidden p-8 shadow-[var(--shadow-elegant)] animate-slide-up">
+      <Card className="overflow-hidden p-4 shadow-[var(--shadow-elegant)] animate-slide-up sm:p-8">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--gradient-primary)] shadow-[var(--shadow-glow)]">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gradient-primary)] shadow-[var(--shadow-glow)] sm:h-12 sm:w-12">
             <Star className="h-6 w-6 text-primary-foreground" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Mi pronóstico del Mundial</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold sm:text-2xl">Mi pronóstico del Mundial</h1>
             <p className="text-sm text-muted-foreground">
               Campeón, goleador y final. Editable hasta 1 día antes del Mundial.
             </p>
@@ -116,7 +164,8 @@ function SpecialForm() {
 
         {!locked && (
           <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-            ⏱️ Tiempo restante para modificar: <strong className="text-primary-deep">{timeUntilSpecialDeadline()}</strong>
+            ⏱️ Tiempo restante para modificar:{" "}
+            <strong className="text-primary-deep">{timeUntilSpecialDeadline()}</strong>
             <div className="mt-1 text-xs text-muted-foreground">Cierre: 10 de junio de 2026</div>
           </div>
         )}
@@ -140,7 +189,9 @@ function SpecialForm() {
             <div className="space-y-2">
               <Label className="text-base font-semibold">🏆 Campeón del Mundial</Label>
               <Select value={championCode} onValueChange={setChampionCode}>
-                <SelectTrigger className="h-12"><SelectValue placeholder="Elegí una selección..." /></SelectTrigger>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Elegí una selección..." />
+                </SelectTrigger>
                 <SelectContent>
                   {groupedTeams.map(({ group, teams: teamsInGroup }) => (
                     <SelectGroup key={group}>
@@ -161,15 +212,21 @@ function SpecialForm() {
 
             <div className="space-y-2">
               <Label className="text-base font-semibold">⚽ Goleador del torneo</Label>
-              <Input value={topScorer} onChange={e => setTopScorer(e.target.value)}
-                placeholder="Nombre del jugador..." className="h-12" />
+              <Input
+                value={topScorer}
+                onChange={(e) => setTopScorer(e.target.value)}
+                placeholder="Nombre del jugador..."
+                className="h-12"
+              />
             </div>
 
-            <div className="rounded-xl border bg-secondary/30 p-5">
+            <div className="rounded-xl border bg-secondary/30 p-4 sm:p-5">
               <Label className="mb-3 block text-base font-semibold">🥇 Partido final</Label>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Select value={finalHomeCode} onValueChange={setFinalHomeCode}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Finalista 1" /></SelectTrigger>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Finalista 1" />
+                  </SelectTrigger>
                   <SelectContent>
                     {groupedTeams.map(({ group, teams: teamsInGroup }) => (
                       <SelectGroup key={group}>
@@ -186,7 +243,9 @@ function SpecialForm() {
                   </SelectContent>
                 </Select>
                 <Select value={finalAwayCode} onValueChange={setFinalAwayCode}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Finalista 2" /></SelectTrigger>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Finalista 2" />
+                  </SelectTrigger>
                   <SelectContent>
                     {groupedTeams.map(({ group, teams: teamsInGroup }) => (
                       <SelectGroup key={group}>
@@ -204,26 +263,45 @@ function SpecialForm() {
                 </Select>
               </div>
 
-              <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-                <div>
-                  <Label className="mb-1 block text-xs text-muted-foreground">Goles {finalHomeCode ? teamMap[finalHomeCode]?.name : "Equipo 1"}</Label>
-                  <Input type="number" min={0} max={20} value={finalHomeGoals}
-                    onChange={e => setFinalHomeGoals(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="h-14 text-center text-2xl font-bold" />
+              <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2 sm:gap-3">
+                <div className="min-w-0">
+                  <Label className="mb-1 block truncate text-xs text-muted-foreground">
+                    Goles {finalHomeCode ? teamMap[finalHomeCode]?.name : "Equipo 1"}
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={finalHomeGoals}
+                    onChange={(e) => setFinalHomeGoals(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
+                  />
                 </div>
-                <div className="pb-4 text-2xl font-bold text-muted-foreground">-</div>
-                <div>
-                  <Label className="mb-1 block text-xs text-muted-foreground">Goles {finalAwayCode ? teamMap[finalAwayCode]?.name : "Equipo 2"}</Label>
-                  <Input type="number" min={0} max={20} value={finalAwayGoals}
-                    onChange={e => setFinalAwayGoals(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="h-14 text-center text-2xl font-bold" />
+                <div className="pb-3 text-xl font-bold text-muted-foreground sm:pb-4 sm:text-2xl">
+                  -
+                </div>
+                <div className="min-w-0">
+                  <Label className="mb-1 block truncate text-xs text-muted-foreground">
+                    Goles {finalAwayCode ? teamMap[finalAwayCode]?.name : "Equipo 2"}
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={finalAwayGoals}
+                    onChange={(e) => setFinalAwayGoals(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
+                  />
                 </div>
               </div>
             </div>
           </fieldset>
 
           {!locked && (
-            <Button type="submit" className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]">
+            <Button
+              type="submit"
+              className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]"
+            >
               <Save className="mr-2 h-4 w-4" />
               {existing ? "Actualizar pronóstico" : "Guardar pronóstico"}
             </Button>
@@ -231,11 +309,26 @@ function SpecialForm() {
 
           {existing && (
             <div className="rounded-xl border bg-card p-4 text-sm">
-              <div className="mb-2 flex items-center gap-2 font-semibold"><Trophy className="h-4 w-4 text-primary" /> Tu pronóstico actual</div>
+              <div className="mb-2 flex items-center gap-2 font-semibold">
+                <Trophy className="h-4 w-4 text-primary" /> Tu pronóstico actual
+              </div>
               <ul className="space-y-1 text-muted-foreground">
-                <li>Campeón: <strong className="text-foreground">{teamMap[existing.championCode]?.name}</strong></li>
-                <li>Goleador: <strong className="text-foreground">{existing.topScorer}</strong></li>
-                <li>Final: <strong className="text-foreground">{teamMap[existing.finalHomeCode]?.name} {existing.finalHomeGoals} - {existing.finalAwayGoals} {teamMap[existing.finalAwayCode]?.name}</strong></li>
+                <li>
+                  Campeón:{" "}
+                  <strong className="text-foreground">
+                    {teamMap[existing.championCode]?.name}
+                  </strong>
+                </li>
+                <li>
+                  Goleador: <strong className="text-foreground">{existing.topScorer}</strong>
+                </li>
+                <li>
+                  Final:{" "}
+                  <strong className="break-words text-foreground">
+                    {teamMap[existing.finalHomeCode]?.name} {existing.finalHomeGoals} -{" "}
+                    {existing.finalAwayGoals} {teamMap[existing.finalAwayCode]?.name}
+                  </strong>
+                </li>
               </ul>
             </div>
           )}

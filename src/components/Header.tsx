@@ -2,14 +2,35 @@ import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, LogOut, KeyRound, LayoutDashboard, Medal, Star, Shield, CalendarDays, Users, Flame } from "lucide-react";
+import {
+  Trophy,
+  LogOut,
+  KeyRound,
+  LayoutDashboard,
+  Medal,
+  Star,
+  Shield,
+  CalendarDays,
+  Users,
+  Flame,
+  Menu,
+} from "lucide-react";
 import { useState } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +55,8 @@ export function Header() {
     if (res.ok) {
       toast.success("Contraseña actualizada");
       setPwOpen(false);
-      setCurrent(""); setNext("");
+      setCurrent("");
+      setNext("");
     } else {
       toast.error(res.error || "Error");
     }
@@ -54,26 +76,31 @@ export function Header() {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--gradient-primary)] shadow-[var(--shadow-soft)]">
+    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-6">
+        <Link to="/" className="flex min-w-0 items-center gap-2 text-base font-bold sm:text-lg">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gradient-primary)] shadow-[var(--shadow-soft)]">
             <Trophy className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
+          <span className="hidden truncate bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent min-[380px]:inline">
             Balero World Cup
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map(item => {
+        <nav className="hidden items-center gap-1 lg:flex">
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
             return (
-              <Link key={item.to} to={item.to}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}>
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 ${
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
                 <Icon className="h-4 w-4" />
                 {item.label}
               </Link>
@@ -81,7 +108,31 @@ export function Header() {
           })}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="lg:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Abrir navegación</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuLabel>Navegación</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link key={item.to} to={item.to}>
+                    <DropdownMenuItem>
+                      <Icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </DropdownMenuItem>
+                  </Link>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="hidden text-right sm:block">
             <div className="text-xs text-muted-foreground">Puntos</div>
             <div className="text-sm font-bold text-primary-deep">{user.points} pts</div>
@@ -105,21 +156,70 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <Link to="/"><DropdownMenuItem><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</DropdownMenuItem></Link>
-              <Link to="/teams"><DropdownMenuItem><Users className="mr-2 h-4 w-4" />Equipos</DropdownMenuItem></Link>
-              <Link to="/scorers"><DropdownMenuItem><Flame className="mr-2 h-4 w-4" />Goleadores</DropdownMenuItem></Link>
-              <Link to="/calendar"><DropdownMenuItem><CalendarDays className="mr-2 h-4 w-4" />Calendario</DropdownMenuItem></Link>
-              {!isAdmin && <Link to="/special"><DropdownMenuItem><Star className="mr-2 h-4 w-4" />Mi pronóstico</DropdownMenuItem></Link>}
-              <Link to="/ranking"><DropdownMenuItem><Medal className="mr-2 h-4 w-4" />Ranking</DropdownMenuItem></Link>
+              <Link to="/">
+                <DropdownMenuItem>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/teams">
+                <DropdownMenuItem>
+                  <Users className="mr-2 h-4 w-4" />
+                  Equipos
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/scorers">
+                <DropdownMenuItem>
+                  <Flame className="mr-2 h-4 w-4" />
+                  Goleadores
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/calendar">
+                <DropdownMenuItem>
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  Calendario
+                </DropdownMenuItem>
+              </Link>
+              {!isAdmin && (
+                <Link to="/special">
+                  <DropdownMenuItem>
+                    <Star className="mr-2 h-4 w-4" />
+                    Mi pronóstico
+                  </DropdownMenuItem>
+                </Link>
+              )}
+              <Link to="/ranking">
+                <DropdownMenuItem>
+                  <Medal className="mr-2 h-4 w-4" />
+                  Ranking
+                </DropdownMenuItem>
+              </Link>
               {isAdmin && (
-                <Link to="/admin"><DropdownMenuItem><Shield className="mr-2 h-4 w-4" />Panel admin</DropdownMenuItem></Link>
+                <Link to="/admin">
+                  <DropdownMenuItem>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Panel admin
+                  </DropdownMenuItem>
+                </Link>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setPwOpen(true); }}>
-                <KeyRound className="mr-2 h-4 w-4" />Cambiar contraseña
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setPwOpen(true);
+                }}
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                Cambiar contraseña
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { void handleLogout(); }} className="text-destructive focus:text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />Cerrar sesión
+              <DropdownMenuItem
+                onClick={() => {
+                  void handleLogout();
+                }}
+                className="text-destructive focus:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -134,11 +234,22 @@ export function Header() {
           <form onSubmit={handleChangePw} className="space-y-4">
             <div className="space-y-2">
               <Label>Contraseña actual</Label>
-              <Input type="password" value={current} onChange={e => setCurrent(e.target.value)} required />
+              <Input
+                type="password"
+                value={current}
+                onChange={(e) => setCurrent(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label>Nueva contraseña</Label>
-              <Input type="password" value={next} onChange={e => setNext(e.target.value)} minLength={6} required />
+              <Input
+                type="password"
+                value={next}
+                onChange={(e) => setNext(e.target.value)}
+                minLength={6}
+                required
+              />
             </div>
             <DialogFooter>
               <Button type="submit">Actualizar</Button>

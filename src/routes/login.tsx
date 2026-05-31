@@ -37,9 +37,9 @@ function LoginPage() {
   };
 
   return (
-    <div className="h-svh overflow-hidden bg-[#cfefff] text-[#081a2b]">
-      <main className="grid h-full md:grid-cols-[0.98fr_0.82fr]">
-        <section className="relative hidden overflow-hidden border-r border-[#8fc9eb] px-8 py-8 md:flex md:min-h-0 lg:px-10 xl:px-12">
+    <div className="min-h-svh overflow-y-auto bg-[#cfefff] text-[#081a2b]">
+      <main className="grid min-h-svh lg:grid-cols-[0.98fr_0.82fr]">
+        <section className="relative hidden overflow-hidden border-r border-[#8fc9eb] px-8 py-8 lg:flex lg:min-h-0 lg:px-10 xl:px-12">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.92),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(124,196,232,0.32),_transparent_42%),linear-gradient(180deg,_rgba(233,248,255,0.96),_rgba(201,238,255,0.94))]" />
           <div className="relative mx-auto flex h-full w-full max-w-3xl flex-col justify-center gap-8 lg:gap-10">
             <div className="max-w-lg text-left">
@@ -105,9 +105,9 @@ function LoginPage() {
           </div>
         </section>
 
-        <section className="flex min-h-0 items-center justify-center px-5 py-6 sm:px-8 md:px-8 lg:px-10">
+        <section className="flex min-h-svh items-center justify-center px-4 py-8 sm:px-8 lg:min-h-0 lg:px-10">
           <div className="w-full max-w-[380px]">
-            <div className="text-center md:text-left">
+            <div className="text-center lg:text-left">
               <h2 className="text-3xl font-black tracking-[-0.04em] text-[#081a2b] sm:text-[2rem]">
                 Iniciar sesión
               </h2>
@@ -121,7 +121,7 @@ function LoginPage() {
                 <Input
                   type="text"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="Email o usuario"
                   className="h-13 rounded-2xl border-[#8ec8e8] bg-[#f4fbff] px-4 text-[15px] text-[#081a2b] placeholder:text-[#51708a] focus-visible:ring-[#2d86bb]"
@@ -130,7 +130,7 @@ function LoginPage() {
                 <Input
                   type="password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Contraseña"
                   className="h-13 rounded-2xl border-[#8ec8e8] bg-[#f4fbff] px-4 text-[15px] text-[#081a2b] placeholder:text-[#51708a] focus-visible:ring-[#2d86bb]"
@@ -146,7 +146,10 @@ function LoginPage() {
                 </Button>
 
                 <div className="pt-1 text-center">
-                  <button type="button" className="text-sm font-medium text-[#12304a] transition-colors hover:text-[#0b2640] hover:underline">
+                  <button
+                    type="button"
+                    className="text-sm font-medium text-[#12304a] transition-colors hover:text-[#0b2640] hover:underline"
+                  >
                     ¿Olvidaste tu contraseña?
                   </button>
                 </div>
@@ -164,8 +167,9 @@ function LoginPage() {
               </form>
             </Card>
 
-            <p className="mt-4 text-center text-sm text-[#12304a]/78 md:text-left">
-              <strong className="font-extrabold text-[#081a2b]">Crea una cuenta</strong> para predecir partidos del Mundial.
+            <p className="mt-4 text-center text-sm text-[#12304a]/78 lg:text-left">
+              <strong className="font-extrabold text-[#081a2b]">Crea una cuenta</strong> para
+              predecir partidos del Mundial.
             </p>
           </div>
         </section>

@@ -3,6 +3,7 @@ import { WORLD_CUP_SCHEDULE } from "./world-cup-schedule";
 import { WORLD_CUP_TEAMS } from "./world-cup-teams";
 
 const prisma = new PrismaClient();
+const RESET_CONFIRMATION_FLAG = "--confirm-replace-matches";
 
 const teamNameToCode = new Map(WORLD_CUP_TEAMS.map((team) => [team.name, team.code]));
 
@@ -29,6 +30,12 @@ async function ensureParticipant(name: string) {
 }
 
 async function main() {
+  if (!process.argv.includes(RESET_CONFIRMATION_FLAG)) {
+    throw new Error(
+      `La importación reemplaza todos los partidos y puede eliminar predicciones. Volvé a ejecutarla con ${RESET_CONFIRMATION_FLAG} para confirmarlo explícitamente.`,
+    );
+  }
+
   await prisma.match.deleteMany();
   await prisma.team.deleteMany({
     where: {

@@ -69,53 +69,53 @@ model Player {
 }
 
 model Match {
-  id         String       @id @default(cuid())
-  kickoff    DateTime
-  status     MatchStatus  @default(pending)
-  phase      String?
-  group      String?
-  homeTeamId String
-  awayTeamId String
-  homeGoals  Int?
-  awayGoals  Int?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  homeTeam   Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam   Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  scorers    MatchScorer[]
+  id          String        @id @default(cuid())
+  kickoff     DateTime
+  status      MatchStatus   @default(pending)
+  phase       String?
+  group       String?
+  homeTeamId  String
+  awayTeamId  String
+  homeGoals   Int?
+  awayGoals   Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  homeTeam    Team          @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team          @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  scorers     MatchScorer[]
   predictions Prediction[]
 }
 
 model MatchScorer {
-  id        String   @id @default(cuid())
-  matchId    String
+  id        String @id @default(cuid())
+  matchId   String
   name      String
-  sortOrder Int      @default(0)
-  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sortOrder Int    @default(0)
+  match     Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
 }
 
 model Prediction {
-  id         String             @id @default(cuid())
-  matchId    String
-  userId     String
-  winner     PredictionWinner
-  homeGoals  Int
-  awayGoals  Int
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
-  match      Match              @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scorers    PredictionScorer[]
+  id        String             @id @default(cuid())
+  matchId   String
+  userId    String
+  winner    PredictionWinner
+  homeGoals Int
+  awayGoals Int
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  match     Match              @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scorers   PredictionScorer[]
 
   @@unique([matchId, userId])
 }
 
 model PredictionScorer {
-  id           String      @id @default(cuid())
+  id           String     @id @default(cuid())
   predictionId String
   name         String
-  sortOrder    Int         @default(0)
-  prediction   Prediction  @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  prediction   Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
 }
 
 model SpecialPrediction {

@@ -1,4 +1,12 @@
-import type { Match, Player, Prediction, SpecialPrediction, Team, TeamDetail, User } from "@/lib/types";
+import type {
+  Match,
+  Player,
+  Prediction,
+  SpecialPrediction,
+  Team,
+  TeamDetail,
+  User,
+} from "@/lib/types";
 
 export type PublicUser = Omit<User, "password">;
 export type RankingEntry = PublicUser & { rank: number };
@@ -78,7 +86,11 @@ function getErrorMessage(data: unknown, fallback: string) {
   return fallback;
 }
 
-async function request<T>(path: string, init: RequestInit = {}, options: RequestOptions = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  options: RequestOptions = {},
+): Promise<T> {
   const requiresAuth = options.requiresAuth ?? true;
   const retryOnUnauthorized = options.retryOnUnauthorized ?? requiresAuth;
   const headers = new Headers(init.headers ?? {});
@@ -205,15 +217,27 @@ export const api = {
   },
   ranking: {
     list() {
-      return request<RankingEntry[]>("/ranking", { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
+      return request<RankingEntry[]>(
+        "/ranking",
+        { method: "GET" },
+        { requiresAuth: false, retryOnUnauthorized: false },
+      );
     },
   },
   teams: {
     list() {
-      return request<Team[]>("/teams", { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
+      return request<Team[]>(
+        "/teams",
+        { method: "GET" },
+        { requiresAuth: false, retryOnUnauthorized: false },
+      );
     },
     detail(code: string) {
-      return request<TeamDetail>(`/teams/${code}`, { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
+      return request<TeamDetail>(
+        `/teams/${code}`,
+        { method: "GET" },
+        { requiresAuth: false, retryOnUnauthorized: false },
+      );
     },
     createPlayer(code: string, input: { name: string; position: "P" | "DEF" | "MED" | "DEL" }) {
       return request<Player>(`/teams/${code}/players`, {
@@ -221,7 +245,11 @@ export const api = {
         body: input as unknown as BodyInit,
       });
     },
-    updatePlayer(code: string, playerId: string, input: { name?: string; position?: "P" | "DEF" | "MED" | "DEL"; active?: boolean }) {
+    updatePlayer(
+      code: string,
+      playerId: string,
+      input: { name?: string; position?: "P" | "DEF" | "MED" | "DEL"; active?: boolean },
+    ) {
       return request<Player>(`/teams/${code}/players/${playerId}`, {
         method: "PATCH",
         body: input as unknown as BodyInit,
@@ -230,9 +258,19 @@ export const api = {
   },
   matches: {
     list() {
-      return request<Match[]>("/matches", { method: "GET" }, { requiresAuth: false, retryOnUnauthorized: false });
+      return request<Match[]>(
+        "/matches",
+        { method: "GET" },
+        { requiresAuth: false, retryOnUnauthorized: false },
+      );
     },
-    create(input: { homeTeamCode: string; awayTeamCode: string; kickoff: string; group?: string; phase?: string }) {
+    create(input: {
+      homeTeamCode: string;
+      awayTeamCode: string;
+      kickoff: string;
+      group?: string;
+      phase?: string;
+    }) {
       return request<Match>("/matches", {
         method: "POST",
         body: input as unknown as BodyInit,
@@ -244,7 +282,21 @@ export const api = {
         body: { status } as unknown as BodyInit,
       });
     },
-    updateResult(id: string, result: { homeGoals: number; awayGoals: number; homeScorers: string[]; awayScorers: string[] }) {
+    updateParticipants(id: string, input: { homeTeamCode: string; awayTeamCode: string }) {
+      return request<Match>(`/matches/${id}/participants`, {
+        method: "PATCH",
+        body: input as unknown as BodyInit,
+      });
+    },
+    updateResult(
+      id: string,
+      result: {
+        homeGoals: number;
+        awayGoals: number;
+        homeScorers: string[];
+        awayScorers: string[];
+      },
+    ) {
       return request<Match>(`/matches/${id}/result`, {
         method: "PATCH",
         body: result as unknown as BodyInit,
