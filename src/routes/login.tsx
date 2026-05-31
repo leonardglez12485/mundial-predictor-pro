@@ -5,7 +5,6 @@ import worldCupLogo from "@/assets/world-cup-2026-mark.png";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import heroImg from "@/assets/uruguay-hero.png";
 import seleccionImg from "@/assets/seleccion1.jpg";
@@ -132,56 +131,54 @@ function LoginPage() {
               </div>
             </div>
 
-            <Card className="mt-6 rounded-3xl px-4 py-5 sm:px-5 sm:py-6">
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <Input
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="Email o usuario"
-                  className="h-11 rounded-md bg-background/80 px-4 text-[15px]"
-                  autoComplete="username"
-                />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="Contraseña"
-                  className="h-11 rounded-md bg-background/80 px-4 text-[15px]"
-                  autoComplete="current-password"
-                />
+            <form onSubmit={handleSubmit} className="mt-6 space-y-3 px-4 py-5 sm:px-5 sm:py-6">
+              <Input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Email o usuario"
+                className=" rounded-none border-x-0 border-t-0 border-b-[1.5px] border-primary/30 bg-transparent px-0 text-[15px] shadow-none focus-visible:ring-0 focus-visible:border-primary"
+                autoComplete="username"
+              />
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Contraseña"
+                className="rounded-none border-x-0 border-t-0 border-b-[1.5px] border-primary/30 bg-transparent px-0 text-[15px] shadow-none focus-visible:ring-0 focus-visible:border-primary"
+                autoComplete="current-password"
+              />
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-11 w-full rounded-md text-base font-bold"
-                >
-                  {loading ? "Ingresando..." : "Iniciar sesión"}
-                </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mt-[40px] h-11 w-full rounded-2xl text-base font-bold"
+              >
+                {loading ? "Ingresando..." : "Iniciar sesión"}
+              </Button>
 
-                <div className="pt-1 text-center">
-                  <button
-                    type="button"
-                    className="text-sm font-medium text-primary-deep transition-colors hover:text-foreground hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                </div>
-
-                <div className="my-1 h-px bg-border" />
-
-                <Button
-                  asChild
+              <div className="pt-1 text-center">
+                <button
                   type="button"
-                  variant="outline"
-                  className="h-11 w-full rounded-md text-base font-bold"
+                  className="text-sm font-medium text-primary-deep transition-colors hover:text-foreground hover:underline"
                 >
-                  <Link to="/register">Crear cuenta nueva</Link>
-                </Button>
-              </form>
-            </Card>
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              <div className="my-1 h-px bg-border" />
+
+              <p className="pt-1 text-center text-sm text-muted-foreground">
+                <Link
+                  to="/register"
+                  className="font-semibold text-primary-deep transition-colors hover:text-foreground hover:underline"
+                >
+                  Crear cuenta nueva
+                </Link>
+              </p>
+            </form>
 
             <p className="mt-4 text-left text-sm text-muted-foreground">
               <strong className="font-extrabold text-foreground">Creá una cuenta</strong> para

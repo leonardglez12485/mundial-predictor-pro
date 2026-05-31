@@ -220,13 +220,7 @@ function TeamDetailView() {
               Grupo {team.group}
             </div>
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{team.name}</h1>
-            <p className="mt-1 text-sm font-semibold text-primary-deep">Listado de convocados</p>
           </div>
-        </div>
-
-        <div className="rounded-md border border-primary/15 bg-white/45 px-3 py-2 text-sm font-semibold text-primary-deep backdrop-blur">
-          Cantidad:{" "}
-          <span className="text-lg font-black text-foreground">{team.players.length}</span>
         </div>
       </div>
 
@@ -280,34 +274,31 @@ function TeamDetailView() {
       )}
 
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b bg-secondary/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          <span>Listado de convocados</span>
-          <span>{team.players.length} jugadores</span>
-        </div>
         <div>
           {team.players.length === 0 ? (
             <div className="px-5 py-10 text-center text-sm text-muted-foreground">
               Todavía no hay jugadores cargados para esta selección.
             </div>
           ) : (
-            PLAYER_POSITIONS.map((position) => {
-              const playersInPosition = team.players.filter(
-                (player) => player.position === position,
-              );
+            <>
+              <div className="grid grid-cols-[56px_minmax(0,1fr)_minmax(0,150px)] items-center gap-3 border-b bg-background/45 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:px-4 sm:text-[10px] sm:tracking-[0.12em]">
+                <span className="whitespace-nowrap text-center">Dorsal</span>
+                <span className="whitespace-nowrap">Nombre</span>
+                <span className="whitespace-nowrap">Club</span>
+              </div>
+              {PLAYER_POSITIONS.map((position) => {
+                const playersInPosition = team.players.filter(
+                  (player) => player.position === position,
+                );
 
-              if (playersInPosition.length === 0) {
-                return null;
-              }
+                if (playersInPosition.length === 0) {
+                  return null;
+                }
 
-              return (
-                <section key={position} className="border-t first:border-t-0">
-                  <div className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,150px)] items-center gap-2 border-b bg-background/45 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground sm:px-4">
-                    <span>Dorsal</span>
-                    <span>{positionLabel(position)}</span>
-                    <span>Club</span>
-                  </div>
-                  <div className="divide-y">
-                    {playersInPosition.map((player) => {
+                return (
+                  <section key={position} className="border-t first:border-t-0">
+                    <div className="divide-y">
+                      {playersInPosition.map((player) => {
                       const draft = playerDrafts[player.id] ?? {
                         name: player.name,
                         position: player.position,
@@ -318,9 +309,9 @@ function TeamDetailView() {
                       return (
                         <div
                           key={player.id}
-                          className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,150px)] items-center gap-2 px-3 py-1.5 sm:px-4"
+                          className="grid grid-cols-[56px_minmax(0,1fr)_minmax(0,150px)] items-center gap-3 px-3 py-1.5 sm:px-4"
                         >
-                          <div className="flex h-6 w-8 items-center justify-center rounded border border-border/70 bg-secondary/55 font-mono text-[11px] font-semibold text-foreground">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-secondary/55 font-mono text-[11px] font-semibold text-foreground">
                             {shirtNumber}
                           </div>
                           <div className="min-w-0">
@@ -360,18 +351,18 @@ function TeamDetailView() {
                                 </Select>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="truncate text-xs font-semibold text-foreground sm:text-sm">
+                              <div className="flex min-w-0 flex-col items-start gap-1">
+                                <span className="truncate text-[11px] font-semibold text-foreground sm:text-xs">
                                   {player.name}
                                 </span>
-                                <span className={`inline-flex h-5 items-center rounded px-1.5 text-[10px] font-bold ${positionBadgeClass(player.position)}`}>
+                                <span className={`inline-flex h-4 items-center rounded px-1.5 text-[9px] font-bold ${positionBadgeClass(player.position)}`}>
                                   {positionLabel(player.position)}
                                 </span>
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="truncate text-[11px] text-muted-foreground sm:text-xs">
+                            <div className="truncate text-[11px] font-semibold text-foreground sm:text-xs">
                               {club}
                             </div>
                           </div>
@@ -403,11 +394,12 @@ function TeamDetailView() {
                           )}
                         </div>
                       );
-                    })}
-                  </div>
-                </section>
-              );
-            })
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </>
           )}
         </div>
       </Card>
