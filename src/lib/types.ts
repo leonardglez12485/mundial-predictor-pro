@@ -17,9 +17,9 @@ export interface MatchResult {
 }
 
 export interface Team {
-  code: string;        // ISO-2 country code (lowercase) e.g. "uy", "ar"
+  code: string; // ISO-2 country code (lowercase) e.g. "uy", "ar"
   name: string;
-  flag: string;        // emoji fallback
+  flag: string; // emoji fallback
   group?: string;
 }
 
@@ -57,8 +57,8 @@ export interface Prediction {
 
 export interface SpecialPrediction {
   userId: string;
-  championCode: string;          // team code
-  topScorer: string;             // player name
+  championCode: string; // team code
+  topScorer: string; // player name
   finalHomeCode: string;
   finalAwayCode: string;
   finalHomeGoals: number;
@@ -70,7 +70,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  avatar: string;       // initials
+  avatar: string; // initials
   password?: string;
   points: number;
   role: UserRole;

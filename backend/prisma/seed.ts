@@ -3,18 +3,56 @@ import * as bcrypt from "bcrypt";
 import { WORLD_CUP_TEAMS } from "./world-cup-teams";
 
 const prisma = new PrismaClient();
+const RESET_CONFIRMATION_FLAG = "--confirm-reset";
 
 const users = [
-  { id: "u-admin", name: "Admin", email: "admin@balero.com", password: "Realmadridfc*13", role: UserRole.admin },
-  { id: "u1", name: "Diego Forlán", email: "diego@uy.com", password: "demo1234", role: UserRole.user },
-  { id: "u2", name: "Luis Suárez", email: "luis@uy.com", password: "demo1234", role: UserRole.user },
-  { id: "u3", name: "Edinson Cavani", email: "edi@uy.com", password: "demo1234", role: UserRole.user },
-  { id: "u4", name: "Federico Valverde", email: "fede@uy.com", password: "demo1234", role: UserRole.user },
-  { id: "u5", name: "Darwin Núñez", email: "darwin@uy.com", password: "demo1234", role: UserRole.user },
+  {
+    id: "u-admin",
+    name: "Admin",
+    email: "admin@balero.com",
+    password: "Realmadridfc*13",
+    role: UserRole.admin,
+  },
+  {
+    id: "u1",
+    name: "Diego Forlán",
+    email: "diego@uy.com",
+    password: "demo1234",
+    role: UserRole.user,
+  },
+  {
+    id: "u2",
+    name: "Luis Suárez",
+    email: "luis@uy.com",
+    password: "demo1234",
+    role: UserRole.user,
+  },
+  {
+    id: "u3",
+    name: "Edinson Cavani",
+    email: "edi@uy.com",
+    password: "demo1234",
+    role: UserRole.user,
+  },
+  {
+    id: "u4",
+    name: "Federico Valverde",
+    email: "fede@uy.com",
+    password: "demo1234",
+    role: UserRole.user,
+  },
+  {
+    id: "u5",
+    name: "Darwin Núñez",
+    email: "darwin@uy.com",
+    password: "demo1234",
+    role: UserRole.user,
+  },
 ];
 
 const now = new Date();
-const at = (hoursFromNow: number) => new Date(now.getTime() + Math.round(hoursFromNow * 60 * 60 * 1000));
+const at = (hoursFromNow: number) =>
+  new Date(now.getTime() + Math.round(hoursFromNow * 60 * 60 * 1000));
 
 function avatarFromName(name: string) {
   return name
@@ -26,22 +64,26 @@ function avatarFromName(name: string) {
     .toUpperCase();
 }
 
-function calculatePoints(prediction: {
-  winner: PredictionWinner;
-  homeGoals: number;
-  awayGoals: number;
-  scorers: string[];
-}, result: {
-  homeGoals: number;
-  awayGoals: number;
-  scorers: string[];
-}) {
+function calculatePoints(
+  prediction: {
+    winner: PredictionWinner;
+    homeGoals: number;
+    awayGoals: number;
+    scorers: string[];
+  },
+  result: {
+    homeGoals: number;
+    awayGoals: number;
+    scorers: string[];
+  },
+) {
   let points = 0;
-  const actualWinner = result.homeGoals > result.awayGoals
-    ? PredictionWinner.home
-    : result.homeGoals < result.awayGoals
-      ? PredictionWinner.away
-      : PredictionWinner.draw;
+  const actualWinner =
+    result.homeGoals > result.awayGoals
+      ? PredictionWinner.home
+      : result.homeGoals < result.awayGoals
+        ? PredictionWinner.away
+        : PredictionWinner.draw;
 
   if (prediction.winner === actualWinner) {
     points += 3;
@@ -67,6 +109,12 @@ function calculatePoints(prediction: {
 }
 
 async function main() {
+  if (!process.argv.includes(RESET_CONFIRMATION_FLAG)) {
+    throw new Error(
+      `Este seed elimina todos los datos existentes. Volvé a ejecutarlo con ${RESET_CONFIRMATION_FLAG} para confirmarlo explícitamente.`,
+    );
+  }
+
   await prisma.player.deleteMany();
   await prisma.predictionScorer.deleteMany();
   await prisma.prediction.deleteMany();

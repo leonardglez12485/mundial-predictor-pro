@@ -9,7 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { api, readApiError } from "@/lib/api";
 import type { Player, PlayerPosition, TeamDetail } from "@/lib/types";
@@ -38,7 +44,9 @@ function TeamDetailView() {
   const [submitting, setSubmitting] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerPosition, setNewPlayerPosition] = useState<PlayerPosition>("MED");
-  const [playerDrafts, setPlayerDrafts] = useState<Record<string, { name: string; position: PlayerPosition }>>({});
+  const [playerDrafts, setPlayerDrafts] = useState<
+    Record<string, { name: string; position: PlayerPosition }>
+  >({});
 
   useEffect(() => {
     let active = true;
@@ -80,13 +88,19 @@ function TeamDetailView() {
 
     setSubmitting(true);
     try {
-      const player = await api.teams.createPlayer(teamCode, { name: trimmedName, position: newPlayerPosition });
+      const player = await api.teams.createPlayer(teamCode, {
+        name: trimmedName,
+        position: newPlayerPosition,
+      });
       setTeam((currentTeam) => {
         if (!currentTeam) {
           return currentTeam;
         }
 
-        const nextTeam = sortTeamPlayers({ ...currentTeam, players: [...currentTeam.players, player] });
+        const nextTeam = sortTeamPlayers({
+          ...currentTeam,
+          players: [...currentTeam.players, player],
+        });
         setPlayerDrafts(createDraftMap(nextTeam.players));
         return nextTeam;
       });
@@ -103,7 +117,9 @@ function TeamDetailView() {
   const handleTogglePlayer = async (player: Player) => {
     setSubmitting(true);
     try {
-      const updatedPlayer = await api.teams.updatePlayer(teamCode, player.id, { active: !player.active });
+      const updatedPlayer = await api.teams.updatePlayer(teamCode, player.id, {
+        active: !player.active,
+      });
       setTeam((currentTeam) => {
         if (!currentTeam) {
           return currentTeam;
@@ -111,7 +127,9 @@ function TeamDetailView() {
 
         const nextTeam = sortTeamPlayers({
           ...currentTeam,
-          players: currentTeam.players.map((currentPlayer) => currentPlayer.id === updatedPlayer.id ? updatedPlayer : currentPlayer),
+          players: currentTeam.players.map((currentPlayer) =>
+            currentPlayer.id === updatedPlayer.id ? updatedPlayer : currentPlayer,
+          ),
         });
         setPlayerDrafts(createDraftMap(nextTeam.players));
         return nextTeam;
@@ -154,7 +172,9 @@ function TeamDetailView() {
 
         const nextTeam = sortTeamPlayers({
           ...currentTeam,
-          players: currentTeam.players.map((currentPlayer) => currentPlayer.id === updatedPlayer.id ? updatedPlayer : currentPlayer),
+          players: currentTeam.players.map((currentPlayer) =>
+            currentPlayer.id === updatedPlayer.id ? updatedPlayer : currentPlayer,
+          ),
         });
         setPlayerDrafts(createDraftMap(nextTeam.players));
         return nextTeam;
@@ -170,7 +190,7 @@ function TeamDetailView() {
   if (loading) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
-        <Card className="p-10 text-center text-muted-foreground">Cargando plantel...</Card>
+        <Card className="p-6 text-center text-muted-foreground sm:p-10">Cargando plantel...</Card>
       </main>
     );
   }
@@ -178,7 +198,9 @@ function TeamDetailView() {
   if (!team) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
-        <Card className="p-10 text-center text-muted-foreground">No se encontró la selección.</Card>
+        <Card className="p-6 text-center text-muted-foreground sm:p-10">
+          No se encontró la selección.
+        </Card>
       </main>
     );
   }
@@ -187,29 +209,35 @@ function TeamDetailView() {
   const inactivePlayers = team.players.filter((player) => !player.active);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
-      <Link to="/teams" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+      <Link
+        to="/teams"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Volver a equipos
       </Link>
 
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <Flag team={team} size={64} />
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <Flag team={team} size={56} className="flex-shrink-0" />
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Grupo {team.group}</div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{team.name}</h1>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Grupo {team.group}
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">{team.name}</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
-              Catálogo provisorio de jugadores hasta que se definan las listas finales. El admin puede dar altas y bajas para mantenerlo actualizado.
+              Catálogo provisorio de jugadores hasta que se definan las listas finales. El admin
+              puede dar altas y bajas para mantenerlo actualizado.
             </p>
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Card className="min-w-[180px] p-4">
+        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
+          <Card className="p-4 sm:min-w-[180px]">
             <div className="text-xs uppercase tracking-wider text-muted-foreground">Activos</div>
             <div className="mt-1 text-2xl font-bold">{activePlayers.length}</div>
           </Card>
-          <Card className="min-w-[180px] p-4">
+          <Card className="p-4 sm:min-w-[180px]">
             <div className="text-xs uppercase tracking-wider text-muted-foreground">En baja</div>
             <div className="mt-1 text-2xl font-bold">{inactivePlayers.length}</div>
           </Card>
@@ -221,9 +249,11 @@ function TeamDetailView() {
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
             <UserPlus className="h-4 w-4 text-primary" /> Administrar plantel provisorio
           </div>
-          <form onSubmit={handleCreatePlayer} className="flex flex-col gap-3 sm:flex-row">
+          <form onSubmit={handleCreatePlayer} className="flex flex-col gap-3 md:flex-row">
             <div className="flex-1">
-              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">Nombre</Label>
+              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
+                Nombre
+              </Label>
               <Input
                 value={newPlayerName}
                 onChange={(event) => setNewPlayerName(event.target.value)}
@@ -232,20 +262,31 @@ function TeamDetailView() {
                 disabled={submitting}
               />
             </div>
-            <div className="sm:w-40">
-              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">Posición</Label>
-              <Select value={newPlayerPosition} onValueChange={(value) => setNewPlayerPosition(value as PlayerPosition)}>
+            <div className="md:w-40">
+              <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
+                Posición
+              </Label>
+              <Select
+                value={newPlayerPosition}
+                onValueChange={(value) => setNewPlayerPosition(value as PlayerPosition)}
+              >
                 <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {PLAYER_POSITIONS.map((position) => (
-                    <SelectItem key={position} value={position}>{positionLabel(position)}</SelectItem>
+                    <SelectItem key={position} value={position}>
+                      {positionLabel(position)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" disabled={submitting} className="h-11 w-40 justify-center bg-[var(--gradient-primary)]">
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="h-11 w-full justify-center bg-[var(--gradient-primary)] md:w-40"
+            >
               <UserPlus className="mr-2 h-4 w-4" /> Agregar jugador
             </Button>
           </form>
@@ -263,7 +304,9 @@ function TeamDetailView() {
             </div>
           ) : (
             PLAYER_POSITIONS.map((position) => {
-              const playersInPosition = team.players.filter((player) => player.position === position);
+              const playersInPosition = team.players.filter(
+                (player) => player.position === position,
+              );
 
               if (playersInPosition.length === 0) {
                 return null;
@@ -273,12 +316,20 @@ function TeamDetailView() {
                 <section key={position} className="border-t first:border-t-0">
                   <div className="divide-y">
                     {playersInPosition.map((player, index) => {
-                      const draft = playerDrafts[player.id] ?? { name: player.name, position: player.position };
-                      const playerNumber = team.players.findIndex((currentPlayer) => currentPlayer.id === player.id) + 1;
+                      const draft = playerDrafts[player.id] ?? {
+                        name: player.name,
+                        position: player.position,
+                      };
+                      const playerNumber =
+                        team.players.findIndex((currentPlayer) => currentPlayer.id === player.id) +
+                        1;
 
                       return (
-                        <div key={player.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-muted-foreground">
+                        <div
+                          key={player.id}
+                          className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:px-5"
+                        >
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-muted-foreground">
                             {playerNumber}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -310,35 +361,45 @@ function TeamDetailView() {
                                   </SelectTrigger>
                                   <SelectContent>
                                     {PLAYER_POSITIONS.map((positionOption) => (
-                                      <SelectItem key={positionOption} value={positionOption}>{positionLabel(positionOption)}</SelectItem>
+                                      <SelectItem key={positionOption} value={positionOption}>
+                                        {positionLabel(positionOption)}
+                                      </SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
                               </div>
                             ) : (
-                              <div className="truncate font-medium text-foreground">{player.name}</div>
+                              <div className="truncate font-medium text-foreground">
+                                {player.name}
+                              </div>
                             )}
                             <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <Badge className={positionBadgeClass(player.position)}>{positionLabel(player.position)}</Badge>
+                              <Badge className={positionBadgeClass(player.position)}>
+                                {positionLabel(player.position)}
+                              </Badge>
                             </div>
                           </div>
                           {isAdmin && (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="h-10 w-40 justify-center"
+                                className="h-10 w-full justify-center sm:w-32 lg:w-40"
                                 disabled={submitting}
-                                onClick={() => { void handleSavePlayer(player); }}
+                                onClick={() => {
+                                  void handleSavePlayer(player);
+                                }}
                               >
                                 Guardar
                               </Button>
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="h-10 w-40 justify-center"
+                                className="h-10 w-full justify-center sm:w-32 lg:w-40"
                                 disabled={submitting}
-                                onClick={() => { void handleTogglePlayer(player); }}
+                                onClick={() => {
+                                  void handleTogglePlayer(player);
+                                }}
                               >
                                 {player.active ? "Dar de baja" : "Dar de alta"}
                               </Button>
@@ -362,7 +423,8 @@ function sortTeamPlayers(team: TeamDetail): TeamDetail {
   return {
     ...team,
     players: [...team.players].sort((leftPlayer, rightPlayer) => {
-      const positionDifference = PLAYER_POSITION_ORDER[leftPlayer.position] - PLAYER_POSITION_ORDER[rightPlayer.position];
+      const positionDifference =
+        PLAYER_POSITION_ORDER[leftPlayer.position] - PLAYER_POSITION_ORDER[rightPlayer.position];
       if (positionDifference !== 0) {
         return positionDifference;
       }

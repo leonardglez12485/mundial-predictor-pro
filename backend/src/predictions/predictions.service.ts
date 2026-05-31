@@ -34,11 +34,19 @@ export class PredictionsService {
 
   async upsert(userId: string, matchId: string, dto: UpsertPredictionDto) {
     const match = await this.matchesService.findById(matchId);
+    if (match.homeTeam.code.startsWith("slot-") || match.awayTeam.code.startsWith("slot-")) {
+      throw new ForbiddenException(
+        "La predicción se habilitará cuando se definan ambos participantes",
+      );
+    }
+
     if (this.scoringService.isPredictionLocked(match)) {
       throw new ForbiddenException("La predicción ya está cerrada para este partido");
     }
 
-    const parsedScorers = dto.scorers.map((scorer) => parseStoredScorer(scorer)).filter((scorer) => scorer.name);
+    const parsedScorers = dto.scorers
+      .map((scorer) => parseStoredScorer(scorer))
+      .filter((scorer) => scorer.name);
     const homeScorers = parsedScorers
       .filter((scorer) => scorer.teamCode === match.homeTeam.code)
       .map((scorer) => scorer.name);
@@ -46,7 +54,10 @@ export class PredictionsService {
       .filter((scorer) => scorer.teamCode === match.awayTeam.code)
       .map((scorer) => scorer.name);
     const legacyScorers = parsedScorers
-      .filter((scorer) => scorer.teamCode !== match.homeTeam.code && scorer.teamCode !== match.awayTeam.code)
+      .filter(
+        (scorer) =>
+          scorer.teamCode !== match.homeTeam.code && scorer.teamCode !== match.awayTeam.code,
+      )
       .map((scorer) => scorer.name);
 
     while (homeScorers.length < dto.homeGoals && legacyScorers.length > 0) {
@@ -58,7 +69,9 @@ export class PredictionsService {
     }
 
     if (homeScorers.length !== dto.homeGoals || awayScorers.length !== dto.awayGoals) {
-      throw new BadRequestException("La cantidad de goleadores debe coincidir con los goles de cada equipo");
+      throw new BadRequestException(
+        "La cantidad de goleadores debe coincidir con los goles de cada equipo",
+      );
     }
 
     const serializedScorers = [
@@ -100,7 +113,10 @@ export class PredictionsService {
             homeGoals: dto.homeGoals,
             awayGoals: dto.awayGoals,
             scorers: {
-              create: serializedScorers.map((scorer, index) => ({ name: scorer.trim(), sortOrder: index })),
+              create: serializedScorers.map((scorer, index) => ({
+                name: scorer.trim(),
+                sortOrder: index,
+              })),
             },
           },
         });

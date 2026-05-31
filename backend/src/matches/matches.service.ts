@@ -5,6 +5,7 @@ import { parseStoredScorer, serializeStoredScorer } from "../common/scoring/scor
 import { ScoringService } from "../common/scoring/scoring.service";
 import { TeamsService } from "../teams/teams.service";
 import { CreateMatchDto } from "./dto/create-match.dto";
+import { UpdateMatchParticipantsDto } from "./dto/update-match-participants.dto";
 import { UpdateMatchResultDto } from "./dto/update-match-result.dto";
 
 @Injectable()
@@ -85,21 +86,83 @@ export class MatchesService {
       },
     });
 
+    await this.scoringService.recalculateAllUserPoints();
     return this.toMatchResponse(match);
+  }
+
+  async updateParticipants(id: string, dto: UpdateMatchParticipantsDto) {
+    const match = await this.findById(id);
+    if (
+      match.status !== MatchStatus.pending ||
+      match.homeGoals !== null ||
+      match.awayGoals !== null
+    ) {
+      throw new BadRequestException(
+        "Solo se pueden resolver participantes de partidos pendientes sin resultado",
+      );
+    }
+
+    if (
+      !this.isPlaceholderTeam(match.homeTeam.code) &&
+      !this.isPlaceholderTeam(match.awayTeam.code)
+    ) {
+      throw new BadRequestException("El partido ya tiene sus participantes definidos");
+    }
+
+    if (dto.homeTeamCode === dto.awayTeamCode) {
+      throw new BadRequestException("Los equipos deben ser distintos");
+    }
+
+    const existingPredictions = await this.prisma.prediction.count({ where: { matchId: id } });
+    if (existingPredictions > 0) {
+      throw new BadRequestException(
+        "No se pueden cambiar participantes de un partido con predicciones",
+      );
+    }
+
+    const [homeTeam, awayTeam] = await Promise.all([
+      this.teamsService.findDetailByCode(dto.homeTeamCode),
+      this.teamsService.findDetailByCode(dto.awayTeamCode),
+    ]);
+
+    const updatedMatch = await this.prisma.match.update({
+      where: { id },
+      data: {
+        homeTeamId: homeTeam.id,
+        awayTeamId: awayTeam.id,
+      },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        scorers: { orderBy: { sortOrder: "asc" } },
+      },
+    });
+
+    return this.toMatchResponse(updatedMatch);
   }
 
   async updateResult(id: string, dto: UpdateMatchResultDto) {
     const match = await this.findById(id);
+    if (
+      this.isPlaceholderTeam(match.homeTeam.code) ||
+      this.isPlaceholderTeam(match.awayTeam.code)
+    ) {
+      throw new BadRequestException("Definí ambos participantes antes de cargar el resultado");
+    }
 
     const homeScorers = dto.homeScorers.map((scorer) => scorer.trim()).filter(Boolean);
     const awayScorers = dto.awayScorers.map((scorer) => scorer.trim()).filter(Boolean);
 
     if (homeScorers.length !== dto.homeGoals) {
-      throw new BadRequestException("La cantidad de goleadores del local debe coincidir con sus goles");
+      throw new BadRequestException(
+        "La cantidad de goleadores del local debe coincidir con sus goles",
+      );
     }
 
     if (awayScorers.length !== dto.awayGoals) {
-      throw new BadRequestException("La cantidad de goleadores del visitante debe coincidir con sus goles");
+      throw new BadRequestException(
+        "La cantidad de goleadores del visitante debe coincidir con sus goles",
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -186,7 +249,10 @@ export class MatchesService {
       .filter((scorer) => scorer.teamCode === match.awayTeam.code)
       .map((scorer) => scorer.name);
     const legacyScorers = parsedScorers
-      .filter((scorer) => scorer.teamCode !== match.homeTeam.code && scorer.teamCode !== match.awayTeam.code)
+      .filter(
+        (scorer) =>
+          scorer.teamCode !== match.homeTeam.code && scorer.teamCode !== match.awayTeam.code,
+      )
       .map((scorer) => scorer.name);
 
     while (homeScorers.length < match.homeGoals && legacyScorers.length > 0) {
@@ -211,5 +277,9 @@ export class MatchesService {
       scorerEntries,
       scorers: scorerEntries.map((scorer) => scorer.name),
     };
+  }
+
+  private isPlaceholderTeam(code: string) {
+    return code.startsWith("slot-");
   }
 }

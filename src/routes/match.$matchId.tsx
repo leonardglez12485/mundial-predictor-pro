@@ -11,12 +11,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, Lock, Trophy, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Flag } from "@/components/Flag";
 import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
-import type { Player } from "@/lib/types";
+import type { Match, Player, Prediction, User } from "@/lib/types";
 
 export const Route = createFileRoute("/match/$matchId")({
   head: () => ({ meta: [{ title: "Predicción — Balero World Cup" }] }),
@@ -36,37 +42,30 @@ function MatchPredictionPage() {
 
 function PredictionForm() {
   const { matchId } = Route.useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { matches, getPrediction, savePrediction, loading } = usePredictions();
-  const match = matches.find(m => m.id === matchId);
+  const match = matches.find((m) => m.id === matchId);
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <Card className="p-10 text-center text-muted-foreground">Cargando partido y predicción...</Card>
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
+        <Card className="p-6 text-center text-muted-foreground sm:p-10">
+          Cargando partido y predicción...
+        </Card>
       </main>
     );
   }
 
-  const existing = user && match ? getPrediction(match.id, user.id) : undefined;
-  const [homeGoals, setHomeGoals] = useState(existing?.homeGoals ?? 1);
-  const [awayGoals, setAwayGoals] = useState(existing?.awayGoals ?? 1);
-  const initialScorers = existing && match
-    ? splitScorerSelections(existing.scorers, match.home.code, match.away.code, existing.homeGoals, existing.awayGoals)
-    : { homeScorers: [], awayScorers: [] };
-  const [homeScorers, setHomeScorers] = useState(() => resizeScorerList(initialScorers.homeScorers, existing?.homeGoals ?? 1));
-  const [awayScorers, setAwayScorers] = useState(() => resizeScorerList(initialScorers.awayScorers, existing?.awayGoals ?? 1));
-  const [homePlayers, setHomePlayers] = useState<Player[]>([]);
-  const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
-  const [playersLoading, setPlayersLoading] = useState(true);
-
   if (!match || !user) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <Card className="p-10 text-center">
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
+        <Card className="p-6 text-center sm:p-10">
           <p className="text-muted-foreground">Partido no encontrado</p>
-          <Link to="/"><Button variant="link" className="mt-3">Volver</Button></Link>
+          <Link to="/">
+            <Button variant="link" className="mt-3">
+              Volver
+            </Button>
+          </Link>
         </Card>
       </main>
     );
@@ -74,16 +73,65 @@ function PredictionForm() {
 
   if (user.role === "admin") {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <Card className="p-10 text-center">
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
+        <Card className="p-6 text-center sm:p-10">
           <p className="text-lg font-semibold">Acceso solo para gestión administrativa</p>
-          <p className="mt-2 text-muted-foreground">El administrador no puede crear predicciones. Cargá resultados y goleadores desde el panel admin.</p>
-          <Link to="/admin"><Button className="mt-4">Ir al panel admin</Button></Link>
+          <p className="mt-2 text-muted-foreground">
+            El administrador no puede crear predicciones. Cargá resultados y goleadores desde el
+            panel admin.
+          </p>
+          <Link to="/admin">
+            <Button className="mt-4">Ir al panel admin</Button>
+          </Link>
         </Card>
       </main>
     );
   }
 
+  const existing = getPrediction(match.id, user.id);
+  return (
+    <LoadedPredictionForm
+      key={`${match.id}:${existing?.updatedAt ?? "new"}`}
+      match={match}
+      user={user}
+      existing={existing}
+      savePrediction={savePrediction}
+    />
+  );
+}
+
+function LoadedPredictionForm({
+  match,
+  user,
+  existing,
+  savePrediction,
+}: {
+  match: Match;
+  user: User;
+  existing: Prediction | undefined;
+  savePrediction: (prediction: Prediction) => Promise<void>;
+}) {
+  const navigate = useNavigate();
+  const [homeGoals, setHomeGoals] = useState(existing?.homeGoals ?? 1);
+  const [awayGoals, setAwayGoals] = useState(existing?.awayGoals ?? 1);
+  const initialScorers = existing
+    ? splitScorerSelections(
+        existing.scorers,
+        match.home.code,
+        match.away.code,
+        existing.homeGoals,
+        existing.awayGoals,
+      )
+    : { homeScorers: [], awayScorers: [] };
+  const [homeScorers, setHomeScorers] = useState(() =>
+    resizeScorerList(initialScorers.homeScorers, existing?.homeGoals ?? 1),
+  );
+  const [awayScorers, setAwayScorers] = useState(() =>
+    resizeScorerList(initialScorers.awayScorers, existing?.awayGoals ?? 1),
+  );
+  const [homePlayers, setHomePlayers] = useState<Player[]>([]);
+  const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
+  const [playersLoading, setPlayersLoading] = useState(true);
   const locked = isPredictionLocked(match);
   const participantsResolved = hasResolvedParticipants(match);
   const winner: "home" | "away" | "draw" =
@@ -92,10 +140,6 @@ function PredictionForm() {
   const earnedPoints = finished && existing ? calculatePoints(existing, match) : 0;
 
   useEffect(() => {
-    if (!match) {
-      return;
-    }
-
     let active = true;
 
     const loadPlayers = async () => {
@@ -138,14 +182,22 @@ function PredictionForm() {
     const normalizedHomeScorers = homeScorers.filter(Boolean);
     const normalizedAwayScorers = awayScorers.filter(Boolean);
     if (normalizedHomeScorers.length !== homeGoals) {
-      return toast.error(`Debés elegir ${homeGoals} goleador${homeGoals === 1 ? "" : "es"} para ${match.home.name}`);
+      return toast.error(
+        `Debés elegir ${homeGoals} goleador${homeGoals === 1 ? "" : "es"} para ${match.home.name}`,
+      );
     }
     if (normalizedAwayScorers.length !== awayGoals) {
-      return toast.error(`Debés elegir ${awayGoals} goleador${awayGoals === 1 ? "" : "es"} para ${match.away.name}`);
+      return toast.error(
+        `Debés elegir ${awayGoals} goleador${awayGoals === 1 ? "" : "es"} para ${match.away.name}`,
+      );
     }
     await savePrediction({
-      matchId: match.id, userId: user.id,
-      winner, homeGoals, awayGoals, scorers: [...normalizedHomeScorers, ...normalizedAwayScorers],
+      matchId: match.id,
+      userId: user.id,
+      winner,
+      homeGoals,
+      awayGoals,
+      scorers: [...normalizedHomeScorers, ...normalizedAwayScorers],
       updatedAt: new Date().toISOString(),
     });
     toast.success("¡Predicción guardada!");
@@ -153,25 +205,32 @@ function PredictionForm() {
   };
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+      <Link
+        to="/"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Volver al dashboard
       </Link>
 
-      <Card className="overflow-hidden p-8 shadow-[var(--shadow-elegant)] animate-slide-up">
+      <Card className="overflow-hidden p-4 shadow-[var(--shadow-elegant)] animate-slide-up sm:p-8">
         <div className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {formatMatchStage(match)} · {formatKickoff(match.kickoff)}
         </div>
 
-        <div className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-          <div className="flex flex-col items-center text-center">
-            <Flag team={match.home} size={64} className="mb-3" />
-            <div className="text-lg font-bold">{match.home.name}</div>
+        <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
+          <div className="flex min-w-0 flex-col items-center text-center">
+            <Flag team={match.home} size={48} className="mb-3 sm:h-16 sm:w-16" />
+            <div className="max-w-full truncate text-sm font-bold sm:text-lg">
+              {match.home.name}
+            </div>
           </div>
-          <div className="text-3xl font-black text-muted-foreground">VS</div>
-          <div className="flex flex-col items-center text-center">
-            <Flag team={match.away} size={64} className="mb-3" />
-            <div className="text-lg font-bold">{match.away.name}</div>
+          <div className="text-2xl font-black text-muted-foreground sm:text-3xl">VS</div>
+          <div className="flex min-w-0 flex-col items-center text-center">
+            <Flag team={match.away} size={48} className="mb-3 sm:h-16 sm:w-16" />
+            <div className="max-w-full truncate text-sm font-bold sm:text-lg">
+              {match.away.name}
+            </div>
           </div>
         </div>
 
@@ -183,7 +242,8 @@ function PredictionForm() {
 
         {!participantsResolved && (
           <div className="mb-6 rounded-xl border bg-secondary/40 px-4 py-3 text-center text-sm text-muted-foreground">
-            Este cruce todavía depende de clasificados previos. El calendario ya está cargado, pero la predicción quedará habilitada cuando se definan los equipos.
+            Este cruce todavía depende de clasificados previos. El calendario ya está cargado, pero
+            la predicción quedará habilitada cuando se definan los equipos.
           </div>
         )}
 
@@ -193,7 +253,8 @@ function PredictionForm() {
             <div>
               <div className="font-semibold text-destructive">Predicción cerrada</div>
               <div className="text-destructive/80">
-                Solo podés predecir en estado pendiente. Una hora antes del inicio, y en cualquier otro estado, la predicción queda cerrada.
+                Solo podés predecir en estado pendiente. Una hora antes del inicio, y en cualquier
+                otro estado, la predicción queda cerrada.
               </div>
             </div>
           </div>
@@ -201,7 +262,9 @@ function PredictionForm() {
 
         {finished && match.result && (
           <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Resultado final</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              Resultado final
+            </div>
             <div className="my-1 text-3xl font-black text-primary-deep">
               {match.result.homeGoals} - {match.result.awayGoals}
             </div>
@@ -214,35 +277,53 @@ function PredictionForm() {
         )}
 
         <form onSubmit={handleSave} className="space-y-6">
-          <fieldset disabled={locked || !participantsResolved} className="space-y-6 disabled:opacity-60">
+          <fieldset
+            disabled={locked || !participantsResolved}
+            className="space-y-6 disabled:opacity-60"
+          >
             <div>
               <Label className="mb-3 block text-base font-semibold">Marcador predicho</Label>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
                 <div className="space-y-1.5">
                   <div className="text-center text-xs text-muted-foreground">{match.home.name}</div>
-                  <Input type="number" min={0} max={20} value={homeGoals}
-                    onChange={e => {
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={homeGoals}
+                    onChange={(e) => {
                       const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
                       setHomeGoals(nextGoals);
-                      setHomeScorers(prev => resizeScorerList(prev, nextGoals));
+                      setHomeScorers((prev) => resizeScorerList(prev, nextGoals));
                     }}
-                    className="h-20 text-center text-4xl font-bold" />
+                    className="h-16 text-center text-3xl font-bold sm:h-20 sm:text-4xl"
+                  />
                 </div>
-                <div className="text-3xl font-bold text-muted-foreground">-</div>
+                <div className="text-2xl font-bold text-muted-foreground sm:text-3xl">-</div>
                 <div className="space-y-1.5">
                   <div className="text-center text-xs text-muted-foreground">{match.away.name}</div>
-                  <Input type="number" min={0} max={20} value={awayGoals}
-                    onChange={e => {
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={awayGoals}
+                    onChange={(e) => {
                       const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
                       setAwayGoals(nextGoals);
-                      setAwayScorers(prev => resizeScorerList(prev, nextGoals));
+                      setAwayScorers((prev) => resizeScorerList(prev, nextGoals));
                     }}
-                    className="h-20 text-center text-4xl font-bold" />
+                    className="h-16 text-center text-3xl font-bold sm:h-20 sm:text-4xl"
+                  />
                 </div>
               </div>
               <div className="mt-3 text-center text-sm text-muted-foreground">
-                Ganador: <span className="font-semibold text-foreground">
-                  {winner === "draw" ? "Empate" : winner === "home" ? match.home.name : match.away.name}
+                Ganador:{" "}
+                <span className="font-semibold text-foreground">
+                  {winner === "draw"
+                    ? "Empate"
+                    : winner === "home"
+                      ? match.home.name
+                      : match.away.name}
                 </span>
               </div>
             </div>
@@ -267,28 +348,45 @@ function PredictionForm() {
                   onChange={setAwayScorers}
                 />
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">+2 puntos por cada goleador acertado</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                +2 puntos por cada goleador acertado
+              </p>
             </div>
 
             <div className="rounded-xl border bg-secondary/40 p-4 text-sm">
               <div className="mb-2 font-semibold">Sistema de puntos</div>
               <ul className="space-y-1 text-muted-foreground">
-                <li>✓ Acertar el ganador: <strong className="text-foreground">+3 pts</strong></li>
-                <li>✓ Acertar el marcador exacto: <strong className="text-foreground">+5 pts adicionales</strong></li>
-                <li>✓ Cada goleador correcto: <strong className="text-foreground">+2 pts</strong></li>
+                <li>
+                  ✓ Acertar el ganador: <strong className="text-foreground">+3 pts</strong>
+                </li>
+                <li>
+                  ✓ Acertar el marcador exacto:{" "}
+                  <strong className="text-foreground">+5 pts adicionales</strong>
+                </li>
+                <li>
+                  ✓ Cada goleador correcto: <strong className="text-foreground">+2 pts</strong>
+                </li>
               </ul>
             </div>
           </fieldset>
 
           {!locked && participantsResolved && (
-            <Button type="submit" className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]">
+            <Button
+              type="submit"
+              className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]"
+            >
               <Save className="mr-2 h-4 w-4" />
               {existing ? "Actualizar predicción" : "Guardar predicción"}
             </Button>
           )}
 
           {locked && participantsResolved && !finished && (
-            <Button type="button" disabled variant="outline" className="h-12 w-full text-base font-semibold">
+            <Button
+              type="button"
+              disabled
+              variant="outline"
+              className="h-12 w-full text-base font-semibold"
+            >
               <Lock className="mr-2 h-4 w-4" /> Cerrado
             </Button>
           )}
@@ -321,7 +419,9 @@ function PredictionScorerSection({
         <Flag team={team} size={18} className="shadow-none" />
         <div>
           <div className="text-sm font-semibold">{team.name}</div>
-          <div className="text-xs text-muted-foreground">{goalCount} gol{goalCount === 1 ? "" : "es"} previstos</div>
+          <div className="text-xs text-muted-foreground">
+            {goalCount} gol{goalCount === 1 ? "" : "es"} previstos
+          </div>
         </div>
       </div>
 
@@ -342,7 +442,9 @@ function PredictionScorerSection({
         <div className="space-y-2">
           {Array.from({ length: goalCount }, (_, index) => (
             <div key={`${team.code}-${index}`} className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Goleador {index + 1}</Label>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Goleador {index + 1}
+              </Label>
               <Select
                 value={scorers[index] || undefined}
                 onValueChange={(value) => {
@@ -378,16 +480,19 @@ function resizeScorerList(scorers: string[], goalCount: number) {
   return nextScorers;
 }
 
-function buildPredictionPlayerOptions(teamCode: string, players: Player[], selectedScorers: string[]) {
+function buildPredictionPlayerOptions(
+  teamCode: string,
+  players: Player[],
+  selectedScorers: string[],
+) {
   const activeOptionMap = new Map(
     players
       .filter((player) => player.active)
       .map((player) => [serializeScorerEntry(teamCode, player.name), player.name]),
   );
-  const optionValues = Array.from(new Set([
-    ...activeOptionMap.keys(),
-    ...selectedScorers.filter(Boolean),
-  ]));
+  const optionValues = Array.from(
+    new Set([...activeOptionMap.keys(), ...selectedScorers.filter(Boolean)]),
+  );
 
   return optionValues
     .map((value) => {

@@ -4,6 +4,7 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { CreateMatchDto } from "./dto/create-match.dto";
+import { UpdateMatchParticipantsDto } from "./dto/update-match-participants.dto";
 import { UpdateMatchResultDto } from "./dto/update-match-result.dto";
 import { UpdateMatchStatusDto } from "./dto/update-match-status.dto";
 import { MatchesService } from "./matches.service";
@@ -29,6 +30,13 @@ export class MatchesController {
   @Patch(":id/status")
   updateStatus(@Param("id") id: string, @Body() dto: UpdateMatchStatusDto) {
     return this.matchesService.updateStatus(id, dto.status);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @Patch(":id/participants")
+  updateParticipants(@Param("id") id: string, @Body() dto: UpdateMatchParticipantsDto) {
+    return this.matchesService.updateParticipants(id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
