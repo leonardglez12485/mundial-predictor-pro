@@ -4,7 +4,7 @@ import { PredictionsProvider } from "@/context/PredictionsContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import faviconPng from "../assets/favicon.png?url";
+import faviconLogo from "../assets/world-cup-2026-mark.png?url";
 
 function NotFoundComponent() {
   return (
@@ -46,7 +46,7 @@ export const Route = createRootRoute({
       {
         rel: "icon",
         type: "image/png",
-        href: faviconPng,
+        href: faviconLogo,
       },
       {
         rel: "stylesheet",

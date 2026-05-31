@@ -1,5 +1,15 @@
 import { Type } from "class-transformer";
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from "class-validator";
 
 export class UpdatePlayerDto {
   @IsOptional()
@@ -17,4 +27,17 @@ export class UpdatePlayerDto {
   @IsString()
   @IsIn(["P", "DEF", "MED", "DEL"])
   position?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  shirtNumber?: number | null;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  club?: string | null;
 }

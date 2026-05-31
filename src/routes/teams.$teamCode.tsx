@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Flag } from "@/components/Flag";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import type { Player, PlayerPosition, TeamDetail } from "@/lib/types";
 
 const PLAYER_POSITIONS: PlayerPosition[] = ["P", "DEF", "MED", "DEL"];
 const PLAYER_POSITION_ORDER: Record<PlayerPosition, number> = { P: 0, DEF: 1, MED: 2, DEL: 3 };
+type PlayerDraft = { name: string; position: PlayerPosition };
 
 export const Route = createFileRoute("/teams/$teamCode")({
   head: () => ({ meta: [{ title: "Plantel de selección — Balero World Cup" }] }),
@@ -44,9 +44,7 @@ function TeamDetailView() {
   const [submitting, setSubmitting] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerPosition, setNewPlayerPosition] = useState<PlayerPosition>("MED");
-  const [playerDrafts, setPlayerDrafts] = useState<
-    Record<string, { name: string; position: PlayerPosition }>
-  >({});
+  const [playerDrafts, setPlayerDrafts] = useState<Record<string, PlayerDraft>>({});
 
   useEffect(() => {
     let active = true;
@@ -205,47 +203,35 @@ function TeamDetailView() {
     );
   }
 
-  const activePlayers = team.players.filter((player) => player.active);
-  const inactivePlayers = team.players.filter((player) => !player.active);
-
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+    <main className="mx-auto max-w-5xl px-3 py-4 sm:px-6 sm:py-6 lg:py-7">
       <Link
         to="/teams"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Volver a equipos
       </Link>
 
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-          <Flag team={team} size={56} className="flex-shrink-0" />
+          <Flag team={team} size={44} className="flex-shrink-0 sm:h-12 sm:w-[72px]" />
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Grupo {team.group}
             </div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">{team.name}</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">
-              Catálogo provisorio de jugadores hasta que se definan las listas finales. El admin
-              puede dar altas y bajas para mantenerlo actualizado.
-            </p>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{team.name}</h1>
+            <p className="mt-1 text-sm font-semibold text-primary-deep">Listado de convocados</p>
           </div>
         </div>
 
-        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
-          <Card className="p-4 sm:min-w-[180px]">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Activos</div>
-            <div className="mt-1 text-2xl font-bold">{activePlayers.length}</div>
-          </Card>
-          <Card className="p-4 sm:min-w-[180px]">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">En baja</div>
-            <div className="mt-1 text-2xl font-bold">{inactivePlayers.length}</div>
-          </Card>
+        <div className="rounded-md border border-primary/15 bg-white/45 px-3 py-2 text-sm font-semibold text-primary-deep backdrop-blur">
+          Cantidad:{" "}
+          <span className="text-lg font-black text-foreground">{team.players.length}</span>
         </div>
       </div>
 
       {isAdmin && (
-        <Card className="mb-6 p-5">
+        <Card className="mb-4 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
             <UserPlus className="h-4 w-4 text-primary" /> Administrar plantel provisorio
           </div>
@@ -258,7 +244,7 @@ function TeamDetailView() {
                 value={newPlayerName}
                 onChange={(event) => setNewPlayerName(event.target.value)}
                 placeholder="Agregar nuevo jugador"
-                className="h-11"
+                className="h-9"
                 disabled={submitting}
               />
             </div>
@@ -270,7 +256,7 @@ function TeamDetailView() {
                 value={newPlayerPosition}
                 onValueChange={(value) => setNewPlayerPosition(value as PlayerPosition)}
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,7 +271,7 @@ function TeamDetailView() {
             <Button
               type="submit"
               disabled={submitting}
-              className="h-11 w-full justify-center bg-[var(--gradient-primary)] md:w-40"
+              className="h-9 w-full justify-center bg-[var(--gradient-primary)] md:w-40"
             >
               <UserPlus className="mr-2 h-4 w-4" /> Agregar jugador
             </Button>
@@ -294,8 +280,9 @@ function TeamDetailView() {
       )}
 
       <Card className="overflow-hidden">
-        <div className="border-b bg-secondary/50 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Plantel de la selección
+        <div className="flex items-center justify-between gap-3 border-b bg-secondary/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <span>Listado de convocados</span>
+          <span>{team.players.length} jugadores</span>
         </div>
         <div>
           {team.players.length === 0 ? (
@@ -314,27 +301,31 @@ function TeamDetailView() {
 
               return (
                 <section key={position} className="border-t first:border-t-0">
+                  <div className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,150px)] items-center gap-2 border-b bg-background/45 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground sm:px-4">
+                    <span>Dorsal</span>
+                    <span>{positionLabel(position)}</span>
+                    <span>Club</span>
+                  </div>
                   <div className="divide-y">
-                    {playersInPosition.map((player, index) => {
+                    {playersInPosition.map((player) => {
                       const draft = playerDrafts[player.id] ?? {
                         name: player.name,
                         position: player.position,
                       };
-                      const playerNumber =
-                        team.players.findIndex((currentPlayer) => currentPlayer.id === player.id) +
-                        1;
+                      const shirtNumber = formatShirtNumber(player.shirtNumber);
+                      const club = formatPlayerClub(player.club);
 
                       return (
                         <div
                           key={player.id}
-                          className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:px-5"
+                          className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,150px)] items-center gap-2 px-3 py-1.5 sm:px-4"
                         >
-                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-muted-foreground">
-                            {playerNumber}
+                          <div className="flex h-6 w-8 items-center justify-center rounded border border-border/70 bg-secondary/55 font-mono text-[11px] font-semibold text-foreground">
+                            {shirtNumber}
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0">
                             {isAdmin ? (
-                              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_110px]">
+                              <div className="grid gap-1 md:grid-cols-[minmax(0,1fr)_88px]">
                                 <Input
                                   value={draft.name}
                                   onChange={(event) => {
@@ -345,7 +336,7 @@ function TeamDetailView() {
                                     }));
                                   }}
                                   disabled={submitting}
-                                  className="h-10"
+                                  className="h-8 text-xs"
                                 />
                                 <Select
                                   value={draft.position}
@@ -356,7 +347,7 @@ function TeamDetailView() {
                                     }));
                                   }}
                                 >
-                                  <SelectTrigger className="h-10">
+                                  <SelectTrigger className="h-8 text-xs">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -369,22 +360,27 @@ function TeamDetailView() {
                                 </Select>
                               </div>
                             ) : (
-                              <div className="truncate font-medium text-foreground">
-                                {player.name}
+                              <div className="flex items-center gap-2">
+                                <span className="truncate text-xs font-semibold text-foreground sm:text-sm">
+                                  {player.name}
+                                </span>
+                                <span className={`inline-flex h-5 items-center rounded px-1.5 text-[10px] font-bold ${positionBadgeClass(player.position)}`}>
+                                  {positionLabel(player.position)}
+                                </span>
                               </div>
                             )}
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <Badge className={positionBadgeClass(player.position)}>
-                                {positionLabel(player.position)}
-                              </Badge>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-[11px] text-muted-foreground sm:text-xs">
+                              {club}
                             </div>
                           </div>
                           {isAdmin && (
-                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+                            <div className="col-span-3 flex flex-wrap items-center justify-end gap-2 pt-1">
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="h-10 w-full justify-center sm:w-32 lg:w-40"
+                                className="h-7 px-2 text-[11px]"
                                 disabled={submitting}
                                 onClick={() => {
                                   void handleSavePlayer(player);
@@ -395,7 +391,7 @@ function TeamDetailView() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="h-10 w-full justify-center sm:w-32 lg:w-40"
+                                className="h-7 px-2 text-[11px]"
                                 disabled={submitting}
                                 onClick={() => {
                                   void handleTogglePlayer(player);
@@ -423,10 +419,20 @@ function sortTeamPlayers(team: TeamDetail): TeamDetail {
   return {
     ...team,
     players: [...team.players].sort((leftPlayer, rightPlayer) => {
+      if (leftPlayer.active !== rightPlayer.active) {
+        return leftPlayer.active ? -1 : 1;
+      }
+
       const positionDifference =
         PLAYER_POSITION_ORDER[leftPlayer.position] - PLAYER_POSITION_ORDER[rightPlayer.position];
       if (positionDifference !== 0) {
         return positionDifference;
+      }
+
+      const leftShirtNumber = leftPlayer.shirtNumber ?? Number.MAX_SAFE_INTEGER;
+      const rightShirtNumber = rightPlayer.shirtNumber ?? Number.MAX_SAFE_INTEGER;
+      if (leftShirtNumber !== rightShirtNumber) {
+        return leftShirtNumber - rightShirtNumber;
       }
 
       return leftPlayer.name.localeCompare(rightPlayer.name, "es");
@@ -438,6 +444,15 @@ function createDraftMap(players: Player[]) {
   return Object.fromEntries(
     players.map((player) => [player.id, { name: player.name, position: player.position }]),
   );
+}
+
+function formatShirtNumber(shirtNumber?: number) {
+  return shirtNumber?.toString() ?? "-";
+}
+
+function formatPlayerClub(club?: string) {
+  const normalized = club?.trim();
+  return normalized && normalized.length > 0 ? normalized : "-";
 }
 
 function positionBadgeClass(position: PlayerPosition) {

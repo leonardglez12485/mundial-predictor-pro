@@ -56,14 +56,16 @@ model Team {
 }
 
 model Player {
-  id        String   @id @default(cuid())
-  teamId    String
-  name      String
-  position  String   @default("MED")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  teamId      String
+  name        String
+  position    String   @default("MED")
+  shirtNumber Int?
+  club        String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
 }

@@ -27,6 +27,8 @@ export interface Player {
   id: string;
   name: string;
   position: PlayerPosition;
+  shirtNumber?: number;
+  club?: string;
   active: boolean;
 }
 

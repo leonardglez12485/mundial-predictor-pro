@@ -41,39 +41,42 @@ export function MatchCard({ match }: { match: Match }) {
   const StatusIcon = status.icon;
 
   return (
-    <Card className="group relative overflow-hidden p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)] sm:p-6">
-      <div className="absolute inset-x-0 top-0 h-1 bg-[var(--gradient-primary)] opacity-0 transition-opacity group-hover:opacity-100" />
+    <Card className="group relative overflow-hidden rounded-2xl p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[var(--shadow-elegant)] sm:p-4">
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-[var(--gradient-primary)] opacity-70 transition-opacity group-hover:opacity-100" />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <Badge variant="outline" className={`${status.color} gap-1.5 font-medium`}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <Badge
+          variant="outline"
+          className={`${status.color} gap-1.5 rounded-md px-2 py-0.5 font-semibold`}
+        >
           <StatusIcon className="h-3 w-3" />
           {status.label}
         </Badge>
         <span className="text-xs font-medium text-muted-foreground">{formatMatchStage(match)}</span>
       </div>
 
-      <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
         <div className="flex min-w-0 flex-col items-center text-center">
-          <Flag team={match.home} size={34} className="mb-2 sm:h-9 sm:w-9" />
+          <Flag team={match.home} size={30} className="mb-1.5 sm:h-8 sm:w-12" />
           <div className="max-w-full truncate text-xs font-semibold sm:text-sm">
             {match.home.name}
           </div>
         </div>
-        <div className="flex min-w-[72px] flex-col items-center">
+        <div className="flex min-w-[66px] flex-col items-center rounded-lg bg-secondary/55 px-2 py-1.5">
           {match.result ? (
-            <div className="text-xl font-bold tabular-nums sm:text-2xl">
+            <div className="text-lg font-black tabular-nums sm:text-xl">
               {match.result.homeGoals} <span className="text-muted-foreground">-</span>{" "}
               {match.result.awayGoals}
             </div>
           ) : (
-            <div className="text-lg font-bold text-muted-foreground sm:text-xl">VS</div>
+            <div className="text-base font-black text-muted-foreground sm:text-lg">VS</div>
           )}
           <div className="mt-1 text-center text-[11px] text-muted-foreground sm:text-xs">
             {formatKickoff(match.kickoff)}
           </div>
         </div>
         <div className="flex min-w-0 flex-col items-center text-center">
-          <Flag team={match.away} size={34} className="mb-2 sm:h-9 sm:w-9" />
+          <Flag team={match.away} size={30} className="mb-1.5 sm:h-8 sm:w-12" />
           <div className="max-w-full truncate text-xs font-semibold sm:text-sm">
             {match.away.name}
           </div>
@@ -94,7 +97,7 @@ export function MatchCard({ match }: { match: Match }) {
       )}
 
       {prediction && (
-        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
+        <div className="mb-3 rounded-lg border border-primary/20 bg-primary/10 p-2.5 text-center">
           <div className="text-xs text-muted-foreground">Tu predicción</div>
           <div className="text-lg font-bold text-primary-deep">
             {prediction.homeGoals} - {prediction.awayGoals}

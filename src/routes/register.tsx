@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
@@ -41,12 +41,11 @@ function RegisterPage() {
     <div className="flex min-h-svh items-center justify-center bg-[var(--gradient-soft)] px-4 py-8 sm:py-12">
       <div className="w-full max-w-md animate-slide-up">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--gradient-primary)] shadow-[var(--shadow-glow)]">
-            <Trophy className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-            Balero World Cup
-          </h1>
+          <BrandLogo
+            size="md"
+            subtitle="Predicciones del Mundial"
+            className="justify-center"
+          />
         </div>
 
         <Card className="border-border/50 p-5 shadow-[var(--shadow-elegant)] sm:p-8">
