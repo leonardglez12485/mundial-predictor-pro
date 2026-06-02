@@ -239,7 +239,15 @@ export const api = {
         { requiresAuth: false, retryOnUnauthorized: false },
       );
     },
-    createPlayer(code: string, input: { name: string; position: "P" | "DEF" | "MED" | "DEL" }) {
+    createPlayer(
+      code: string,
+      input: {
+        name: string;
+        position: "P" | "DEF" | "MED" | "DEL";
+        shirtNumber?: number;
+        club?: string;
+      },
+    ) {
       return request<Player>(`/teams/${code}/players`, {
         method: "POST",
         body: input as unknown as BodyInit,
@@ -248,7 +256,13 @@ export const api = {
     updatePlayer(
       code: string,
       playerId: string,
-      input: { name?: string; position?: "P" | "DEF" | "MED" | "DEL"; active?: boolean },
+      input: {
+        name?: string;
+        position?: "P" | "DEF" | "MED" | "DEL";
+        shirtNumber?: number | null;
+        club?: string | null;
+        active?: boolean;
+      },
     ) {
       return request<Player>(`/teams/${code}/players/${playerId}`, {
         method: "PATCH",

@@ -68,50 +68,47 @@
 }
 
 :root {
-  --radius: 0.875rem;
-  --background: oklch(0.968 0.022 230);
-  --foreground: oklch(0.18 0.03 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 240);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 240);
-  /* Celeste Balero / Uruguay #00aae4 */
-  --primary: oklch(0.706 0.142 232);
-  --primary-foreground: oklch(0.18 0.03 240);
-  --primary-glow: oklch(0.82 0.11 228);
-  --primary-deep: oklch(0.5 0.15 240);
-  --secondary: oklch(0.96 0.015 230);
-  --secondary-foreground: oklch(0.25 0.04 240);
-  --muted: oklch(0.965 0.01 230);
-  --muted-foreground: oklch(0.5 0.025 240);
-  --accent: oklch(0.93 0.04 225);
-  --accent-foreground: oklch(0.25 0.05 240);
+  --radius: 0.5rem;
+  --background: oklch(0.976 0.008 248);
+  --foreground: oklch(0.17 0.028 258);
+  --card: oklch(0.994 0.004 248 / 0.92);
+  --card-foreground: oklch(0.17 0.028 258);
+  --popover: oklch(0.994 0.004 248 / 0.98);
+  --popover-foreground: oklch(0.17 0.028 258);
+  /* Azul marino solido, casi negro para texto y acciones. */
+  --primary: oklch(0.27 0.07 258);
+  --primary-foreground: oklch(0.985 0.004 248);
+  --primary-glow: oklch(0.27 0.07 258);
+  --primary-deep: oklch(0.17 0.028 258);
+  --secondary: oklch(0.944 0.012 246 / 0.9);
+  --secondary-foreground: oklch(0.17 0.028 258);
+  --muted: oklch(0.954 0.01 246 / 0.84);
+  --muted-foreground: oklch(0.47 0.026 257);
+  --accent: oklch(0.83 0.126 86);
+  --accent-foreground: oklch(0.17 0.028 258);
   --destructive: oklch(0.62 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.7 0.15 150);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.2 0.02 75);
-  --border: oklch(0.92 0.015 230);
-  --input: oklch(0.93 0.015 230);
-  --ring: oklch(0.7 0.13 230);
-  --gradient-primary: linear-gradient(135deg, oklch(0.706 0.142 232), oklch(0.82 0.11 228));
-  --gradient-hero: linear-gradient(
-    135deg,
-    oklch(0.5 0.15 240) 0%,
-    oklch(0.706 0.142 232) 50%,
-    oklch(0.85 0.09 225) 100%
-  );
-  --gradient-soft: linear-gradient(180deg, oklch(0.968 0.022 230), oklch(0.915 0.052 228));
-  --shadow-soft: 0 4px 20px -4px oklch(0.5 0.15 240 / 0.14);
-  --shadow-elegant: 0 12px 40px -10px oklch(0.5 0.15 240 / 0.28);
-  --shadow-glow: 0 0 40px oklch(0.706 0.142 232 / 0.4);
+  --border: oklch(0.85 0.014 247 / 0.7);
+  --input: oklch(0.934 0.012 247 / 0.92);
+  --ring: oklch(0.6 0.16 257);
+  --gradient-primary: none;
+  --gradient-hero: none;
+  --gradient-soft: none;
+  --app-stadium-bg: url("./assets/uruguay-stadium-bg.jpg");
+  --app-hero-bg: url("./assets/uruguay-stadium-bg.jpg");
+  --shadow-soft: 0 8px 24px -18px oklch(0.24 0.08 260 / 0.48);
+  --shadow-elegant: 0 18px 44px -30px oklch(0.17 0.08 264 / 0.56);
+  --shadow-glow: 0 0 24px oklch(0.27 0.07 258 / 0.18);
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-1: oklch(0.27 0.07 258);
+  --chart-2: oklch(0.83 0.126 86);
+  --chart-3: oklch(0.3 0.09 262);
+  --chart-4: oklch(0.63 0.16 151);
+  --chart-5: oklch(0.68 0.18 27);
   --sidebar: oklch(0.984 0.003 247.858);
   --sidebar-foreground: oklch(0.129 0.042 264.695);
   --sidebar-primary: oklch(0.208 0.042 265.755);
@@ -178,6 +175,44 @@
 
   body {
     min-width: 0;
+    background-color: var(--color-background);
+    background-image: var(--app-stadium-bg);
+    background-attachment: fixed;
+    background-position: center top;
+    background-size: cover;
+  }
+
+  ::selection {
+    background: oklch(0.83 0.126 86 / 0.42);
+  }
+}
+
+@layer components {
+  .compact-panel {
+    border: 1px solid oklch(0.85 0.014 247 / 0.7);
+    background: oklch(0.994 0.004 248 / 0.88);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(18px);
+  }
+
+  .stadium-hero {
+    background-color: oklch(0.2 0.04 258 / 0.72);
+    background-image: var(--app-hero-bg);
+    background-blend-mode: multiply;
+    background-position: center;
+    background-size: cover;
+  }
+}
+
+@layer utilities {
+  .bg-\[var\(--gradient-primary\)\] {
+    background-image: none;
+    background-color: var(--primary);
+  }
+
+  .bg-\[var\(--gradient-soft\)\] {
+    background-image: none;
+    background-color: var(--background);
   }
 }
 

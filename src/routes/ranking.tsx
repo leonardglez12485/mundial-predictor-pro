@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, Medal } from "lucide-react";
+import { Medal } from "lucide-react";
 
 export const Route = createFileRoute("/ranking")({
   head: () => ({ meta: [{ title: "Ranking — Balero World Cup" }] }),
@@ -29,17 +30,15 @@ function Ranking() {
   const rest = ranking.slice(3);
 
   const podiumStyles = [
-    { order: 2, height: "h-32", color: "from-yellow-400 to-yellow-500", label: "1°" },
-    { order: 1, height: "h-24", color: "from-slate-300 to-slate-400", label: "2°" },
-    { order: 3, height: "h-20", color: "from-amber-600 to-amber-700", label: "3°" },
+    { order: 2, height: "h-32", color: "bg-yellow-400", label: "1°" },
+    { order: 1, height: "h-24", color: "bg-slate-300", label: "2°" },
+    { order: 3, height: "h-20", color: "bg-amber-600", label: "3°" },
   ];
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
       <div className="mb-6 text-center animate-fade-in sm:mb-8">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--gradient-primary)] shadow-[var(--shadow-glow)] sm:h-14 sm:w-14">
-          <Trophy className="h-6 w-6 text-primary-foreground sm:h-7 sm:w-7" />
-        </div>
+        <BrandLogo size="md" showWordmark={false} className="mb-3 justify-center" />
         <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">Ranking Global</h1>
         <p className="mt-2 text-muted-foreground">Los mejores pronosticadores del Mundial</p>
       </div>
@@ -60,9 +59,9 @@ function Ranking() {
                   <div className="text-xs text-muted-foreground">{u.points} pts</div>
                 </div>
                 <div
-                  className={`flex w-full ${style.height} items-start justify-center rounded-t-xl bg-gradient-to-b ${style.color} pt-3 shadow-[var(--shadow-soft)]`}
+                  className={`flex w-full ${style.height} items-start justify-center rounded-t-xl ${style.color} pt-3 shadow-[var(--shadow-soft)]`}
                 >
-                  <span className="text-xl font-black text-[#081a2b] drop-shadow sm:text-2xl">
+                  <span className="text-xl font-black text-foreground drop-shadow sm:text-2xl">
                     {style.label}
                   </span>
                 </div>

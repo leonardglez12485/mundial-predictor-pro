@@ -1,4 +1,5 @@
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Trophy,
   LogOut,
   KeyRound,
   LayoutDashboard,
@@ -76,18 +76,19 @@ export function Header() {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-white/35 bg-background/72 shadow-[0_10px_32px_-28px_rgba(5,24,44,0.8)] backdrop-blur-2xl">
+      <div className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-2 px-3 py-1.5 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-2 text-base font-bold sm:text-lg">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gradient-primary)] shadow-[var(--shadow-soft)]">
-            <Trophy className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="hidden truncate bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent min-[380px]:inline">
-            Balero World Cup
-          </span>
+          <BrandLogo
+            size="sm"
+            subtitle="Mundial 2026"
+            className="min-w-0"
+            titleClassName="hidden truncate text-sm text-primary-deep min-[380px]:inline"
+            subtitleClassName="hidden text-[9px] text-muted-foreground/90 min-[520px]:block"
+          />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-0.5 lg:flex">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
@@ -95,10 +96,10 @@ export function Header() {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 ${
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors xl:px-3 ${
                   active
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "bg-primary/12 text-primary-deep shadow-inner"
+                    : "text-muted-foreground hover:bg-secondary/75 hover:text-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -111,7 +112,7 @@ export function Header() {
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="lg:hidden">
+              <Button variant="outline" size="icon" className="h-8 w-8 lg:hidden">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Abrir navegación</span>
               </Button>
@@ -133,14 +134,14 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="hidden text-right sm:block">
+          <div className="hidden rounded-md border border-primary/15 bg-white/40 px-2 py-1 text-right sm:block">
             <div className="text-xs text-muted-foreground">Puntos</div>
             <div className="text-sm font-bold text-primary-deep">{user.points} pts</div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full ring-offset-background transition-all hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <Avatar className="h-10 w-10 border-2 border-primary/20">
+                <Avatar className="h-9 w-9 border-2 border-primary/20">
                   <AvatarFallback className="bg-[var(--gradient-primary)] font-semibold text-primary-foreground">
                     {user.avatar}
                   </AvatarFallback>

@@ -24,6 +24,7 @@ import { Shield, Plus, Save, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createTeamMap, groupTeams } from "@/lib/teams";
 import { hasResolvedParticipants } from "@/lib/match-display";
+import { OWN_GOAL_SCORER_NAME } from "@/lib/scorer-entry";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Balero World Cup" }] }),
@@ -596,7 +597,7 @@ function ScorerTeamSection({
                 }}
               >
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={`Seleccionar jugador de ${team.name}`} />
+                  <SelectValue placeholder={`Seleccionar jugador o ${OWN_GOAL_SCORER_NAME.toLowerCase()} de ${team.name}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {playerOptions.map((playerOption) => (
@@ -624,10 +625,14 @@ function resizeScorerList(scorers: string[], goalCount: number) {
 
 function buildAdminPlayerOptions(players: Player[], selectedScorers: string[]) {
   const activeNames = new Set(
-    players.filter((player) => player.active).map((player) => player.name),
+    [
+      OWN_GOAL_SCORER_NAME,
+      ...players.filter((player) => player.active).map((player) => player.name),
+    ],
   );
   const optionNames = Array.from(
     new Set([
+      OWN_GOAL_SCORER_NAME,
       ...players.filter((player) => player.active).map((player) => player.name),
       ...selectedScorers.filter(Boolean),
     ]),

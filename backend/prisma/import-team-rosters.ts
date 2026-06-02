@@ -6,68 +6,75 @@ type PlayerPosition = "P" | "DEF" | "MED" | "DEL";
 type ImportedPlayer = {
   name: string;
   position: PlayerPosition;
+  shirtNumber?: number;
+  club?: string;
 };
 
 type ImportOptions = {
   dryRun: boolean;
+  includePreliminary: boolean;
   teamCodes: Set<string> | null;
+};
+
+const TOURNAMENT_SQUADS_PAGE_TITLE = "2026_FIFA_World_Cup_squads";
+const MAX_FINAL_SQUAD_SIZE = 26;
+
+const TEAM_SECTION_TITLES: Record<string, string> = {
+  mx: "Mexico",
+  za: "South Africa",
+  kr: "South Korea",
+  cz: "Czech Republic",
+  ca: "Canada",
+  ba: "Bosnia and Herzegovina",
+  qa: "Qatar",
+  ch: "Switzerland",
+  br: "Brazil",
+  ma: "Morocco",
+  ht: "Haiti",
+  "gb-sct": "Scotland",
+  us: "United States",
+  py: "Paraguay",
+  au: "Australia",
+  tr: "Turkey",
+  de: "Germany",
+  cw: "Curaçao",
+  ci: "Ivory Coast",
+  ec: "Ecuador",
+  nl: "Netherlands",
+  jp: "Japan",
+  se: "Sweden",
+  tn: "Tunisia",
+  be: "Belgium",
+  eg: "Egypt",
+  ir: "Iran",
+  nz: "New Zealand",
+  es: "Spain",
+  cv: "Cape Verde",
+  sa: "Saudi Arabia",
+  uy: "Uruguay",
+  fr: "France",
+  sn: "Senegal",
+  iq: "Iraq",
+  no: "Norway",
+  ar: "Argentina",
+  dz: "Algeria",
+  at: "Austria",
+  jo: "Jordan",
+  pt: "Portugal",
+  cd: "DR Congo",
+  uz: "Uzbekistan",
+  co: "Colombia",
+  gb: "England",
+  hr: "Croatia",
+  gh: "Ghana",
+  pa: "Panama",
 };
 
 const prisma = new PrismaClient();
 
-const TEAM_PAGE_TITLES: Record<string, string> = {
-  mx: "Mexico_national_football_team",
-  za: "South_Africa_national_soccer_team",
-  kr: "South_Korea_national_football_team",
-  cz: "Czech_Republic_national_football_team",
-  ca: "Canada_men's_national_soccer_team",
-  ba: "Bosnia_and_Herzegovina_national_football_team",
-  qa: "Qatar_national_football_team",
-  ch: "Switzerland_national_football_team",
-  br: "Brazil_national_football_team",
-  ma: "Morocco_national_football_team",
-  ht: "Haiti_national_football_team",
-  "gb-sct": "Scotland_national_football_team",
-  us: "United_States_men's_national_soccer_team",
-  py: "Paraguay_national_football_team",
-  au: "Australia_men's_national_soccer_team",
-  tr: "Turkey_national_football_team",
-  de: "Germany_national_football_team",
-  cw: "Curaçao_national_football_team",
-  ci: "Ivory_Coast_national_football_team",
-  ec: "Ecuador_national_football_team",
-  nl: "Netherlands_national_football_team",
-  jp: "Japan_national_football_team",
-  se: "Sweden_men's_national_football_team",
-  tn: "Tunisia_national_football_team",
-  be: "Belgium_national_football_team",
-  eg: "Egypt_national_football_team",
-  ir: "Iran_national_football_team",
-  nz: "New_Zealand_men's_national_football_team",
-  es: "Spain_national_football_team",
-  cv: "Cape_Verde_national_football_team",
-  sa: "Saudi_Arabia_national_football_team",
-  uy: "Uruguay_national_football_team",
-  fr: "France_national_football_team",
-  sn: "Senegal_national_football_team",
-  iq: "Iraq_national_football_team",
-  no: "Norway_national_football_team",
-  ar: "Argentina_national_football_team",
-  dz: "Algeria_national_football_team",
-  at: "Austria_national_football_team",
-  jo: "Jordan_national_football_team",
-  pt: "Portugal_national_football_team",
-  cd: "DR_Congo_national_football_team",
-  uz: "Uzbekistan_national_football_team",
-  co: "Colombia_national_football_team",
-  gb: "England_national_football_team",
-  hr: "Croatia_national_football_team",
-  gh: "Ghana_national_football_team",
-  pa: "Panama_national_football_team",
-};
-
 function parseArgs(argv: string[]): ImportOptions {
   let dryRun = false;
+  let includePreliminary = false;
   const teamCodes = new Set<string>();
 
   for (const rawArg of argv) {
@@ -81,13 +88,23 @@ function parseArgs(argv: string[]): ImportOptions {
       continue;
     }
 
+    if (arg === "--include-preliminary") {
+      includePreliminary = true;
+      continue;
+    }
+
     teamCodes.add(arg);
   }
 
   return {
     dryRun,
+    includePreliminary,
     teamCodes: teamCodes.size > 0 ? teamCodes : null,
   };
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function splitTopLevel(value: string, delimiter: string) {
@@ -194,6 +211,45 @@ function normalizePlayerName(rawValue: string) {
   return value;
 }
 
+function normalizeClubName(rawValue: string) {
+  let value = stripHtmlAndComments(rawValue);
+
+  let previous = "";
+  while (value !== previous) {
+    previous = value;
+    value = value
+      .replace(/\{\{nowrap\|([^{}]+)\}\}/gi, "$1")
+      .replace(/\{\{small\|([^{}]+)\}\}/gi, "$1")
+      .replace(/\{\{nobold\|([^{}]+)\}\}/gi, "$1")
+      .replace(/\{\{abbr\|([^|{}]+)\|([^|{}]+)\}\}/gi, "$1")
+      .replace(/\{\{[^{}]*\}\}/g, " ");
+  }
+
+  return decodeEntities(
+    value
+      .replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, "$2")
+      .replace(/\[\[([^\]]+)\]\]/g, "$1")
+      .replace(/''+/g, "")
+      .replace(/[\u200e\u200f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
+}
+
+function parseShirtNumber(rawValue: string) {
+  const normalized = rawValue.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(normalized, 10);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 99) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
 function mapPosition(rawPosition: string): PlayerPosition | null {
   const normalized = rawPosition.toUpperCase();
 
@@ -216,17 +272,43 @@ function mapPosition(rawPosition: string): PlayerPosition | null {
   return null;
 }
 
-function getCurrentSquadSection(wikitext: string) {
-  const headingMatch = /={2,6}\s*Current squad\s*={2,6}/i.exec(wikitext);
+function getTeamSection(wikitext: string, sectionTitle: string) {
+  const headingMatch = new RegExp(`={3}\s*${escapeRegExp(sectionTitle)}\s*={3}`, "i").exec(wikitext);
   if (!headingMatch) {
-    throw new Error("No se encontró la sección Current squad");
+    throw new Error(`No se encontró la sección ${sectionTitle}`);
   }
 
   const sectionStart = headingMatch.index + headingMatch[0].length;
   const remaining = wikitext.slice(sectionStart);
-  const nextHeadingMatch = /\n={2,6}\s*[^=\n].*?={2,6}/.exec(remaining);
+  const nextHeadingMatch = /\n={2,3}\s*[^=\n].*?={2,3}/.exec(remaining);
 
   return remaining.slice(0, nextHeadingMatch ? nextHeadingMatch.index : remaining.length);
+}
+
+function getRosterSection(teamSection: string) {
+  const startMatch = /\{\{\s*nat fs g start\s*\}\}/i.exec(teamSection);
+  if (!startMatch) {
+    throw new Error("No se encontró la tabla de plantilla");
+  }
+
+  const remaining = teamSection.slice(startMatch.index);
+  const endMatch = /\{\{\s*nat fs g end\s*\}\}/i.exec(remaining);
+
+  return remaining.slice(0, endMatch ? endMatch.index + endMatch[0].length : remaining.length);
+}
+
+function hasFinalRosterAnnouncement(teamSection: string) {
+  const preamble = teamSection.split(/\{\{\s*nat fs g start\s*\}\}/i, 1)[0];
+
+  if (/final squad (?:will|to be) announced/i.test(preamble)) {
+    return false;
+  }
+
+  return (
+    /announced (?:their |the )?final squad/i.test(preamble) ||
+    /their final squad was announced/i.test(preamble) ||
+    /officially confirmed/i.test(preamble)
+  );
 }
 
 function dedupePlayers(players: ImportedPlayer[]) {
@@ -254,27 +336,24 @@ function extractPlayersFromSection(section: string) {
     const params = parseTemplateParams(line);
     const name = normalizePlayerName(params.get("name") ?? "");
     const position = mapPosition(params.get("pos") ?? params.get("position") ?? "");
+    const shirtNumber = parseShirtNumber(params.get("no") ?? params.get("number") ?? params.get("num") ?? "");
+    const club = normalizeClubName(params.get("club") ?? "");
 
     if (!name || !position) {
       continue;
     }
 
-    players.push({ name, position });
+    players.push({ name, position, shirtNumber, club: club || undefined });
   }
 
   return dedupePlayers(players);
 }
 
-async function fetchRoster(teamCode: string) {
-  const pageTitle = TEAM_PAGE_TITLES[teamCode];
-  if (!pageTitle) {
-    throw new Error(`No existe una página configurada para ${teamCode}`);
-  }
-
+async function fetchTournamentSquadsPage() {
   const url = new URL("https://en.wikipedia.org/w/api.php");
   url.search = new URLSearchParams({
     action: "parse",
-    page: pageTitle,
+    page: TOURNAMENT_SQUADS_PAGE_TITLE,
     prop: "wikitext",
     formatversion: "2",
     format: "json",
@@ -283,7 +362,7 @@ async function fetchRoster(teamCode: string) {
 
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Wikipedia respondió ${response.status} para ${pageTitle}`);
+    throw new Error(`Wikipedia respondió ${response.status} para ${TOURNAMENT_SQUADS_PAGE_TITLE}`);
   }
 
   const payload = await response.json() as {
@@ -297,18 +376,29 @@ async function fetchRoster(teamCode: string) {
 
   const wikitext = payload.parse?.wikitext;
   if (!wikitext) {
-    throw new Error(`No se recibió wikitext para ${pageTitle}`);
+    throw new Error(`No se recibió wikitext para ${TOURNAMENT_SQUADS_PAGE_TITLE}`);
   }
 
-  const players = extractPlayersFromSection(getCurrentSquadSection(wikitext));
+  return wikitext;
+}
+
+async function fetchRoster(teamCode: string, squadsPageWikitext: string) {
+  const sectionTitle = TEAM_SECTION_TITLES[teamCode];
+  if (!sectionTitle) {
+    throw new Error(`No existe una sección configurada para ${teamCode}`);
+  }
+
+  const teamSection = getTeamSection(squadsPageWikitext, sectionTitle);
+  const players = extractPlayersFromSection(getRosterSection(teamSection));
   if (players.length === 0) {
-    throw new Error(`No se pudo extraer la plantilla de ${pageTitle}`);
+    throw new Error(`No se pudo extraer la plantilla de ${sectionTitle}`);
   }
 
   return {
-    pageTitle,
+    sectionTitle,
     players,
-    sourceUrl: `https://en.wikipedia.org/wiki/${pageTitle}`,
+    final: players.length <= MAX_FINAL_SQUAD_SIZE || hasFinalRosterAnnouncement(teamSection),
+    sourceUrl: `https://en.wikipedia.org/wiki/${TOURNAMENT_SQUADS_PAGE_TITLE}`,
   };
 }
 
@@ -321,18 +411,30 @@ async function main() {
   }
 
   const missingMappings = selectedTeams
-    .filter((team) => !TEAM_PAGE_TITLES[team.code])
+    .filter((team) => !TEAM_SECTION_TITLES[team.code])
     .map((team) => `${team.code} (${team.name})`);
 
   if (missingMappings.length > 0) {
-    throw new Error(`Faltan páginas configuradas para: ${missingMappings.join(", ")}`);
+    throw new Error(`Faltan secciones configuradas para: ${missingMappings.join(", ")}`);
   }
+
+  const squadsPageWikitext = await fetchTournamentSquadsPage();
 
   let importedTeams = 0;
   let importedPlayers = 0;
+  let skippedTeams = 0;
 
   for (const team of selectedTeams) {
-    const roster = await fetchRoster(team.code);
+    const roster = await fetchRoster(team.code, squadsPageWikitext);
+
+    if (!options.includePreliminary && !roster.final) {
+      skippedTeams += 1;
+      console.log(
+        `[skip] ${team.code} ${team.name}: ${roster.players.length} jugadores en lista preliminar (${roster.sourceUrl})`,
+      );
+      continue;
+    }
+
     const persistedTeam = await prisma.team.upsert({
       where: { code: team.code },
       update: {
@@ -351,6 +453,8 @@ async function main() {
             teamId: persistedTeam.id,
             name: player.name,
             position: player.position,
+            shirtNumber: player.shirtNumber,
+            club: player.club,
             active: true,
           })),
         }),
@@ -361,12 +465,14 @@ async function main() {
     importedPlayers += roster.players.length;
 
     console.log(
-      `${options.dryRun ? "[dry-run] " : ""}${team.code} ${team.name}: ${roster.players.length} jugadores (${roster.sourceUrl})`,
+      `${options.dryRun ? "[dry-run] " : ""}${team.code} ${team.name}: ${roster.players.length} jugadores${
+        roster.final ? "" : " (preliminar)"
+      } (${roster.sourceUrl})`,
     );
   }
 
   console.log(
-    `${options.dryRun ? "Validación completada" : "Importación completada"}: ${importedTeams} equipos, ${importedPlayers} jugadores.`,
+    `${options.dryRun ? "Validación completada" : "Importación completada"}: ${importedTeams} equipos, ${importedPlayers} jugadores, ${skippedTeams} equipos omitidos por plantilla preliminar.`,
   );
 }
 

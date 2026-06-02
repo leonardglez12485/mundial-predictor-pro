@@ -53,6 +53,8 @@ export class TeamsService {
         teamId: team.id,
         name,
         position: dto.position ?? "MED",
+        shirtNumber: dto.shirtNumber,
+        club: dto.club?.trim() || undefined,
       },
     });
   }
@@ -81,6 +83,8 @@ export class TeamsService {
       data: {
         name: name ?? undefined,
         position: dto.position,
+        shirtNumber: dto.shirtNumber,
+        club: dto.club === undefined ? undefined : dto.club?.trim() || null,
         active: dto.active,
       },
     });
@@ -95,11 +99,20 @@ export class TeamsService {
     };
   }
 
-  toPlayerResponse(player: { id: string; name: string; position: string; active: boolean }) {
+  toPlayerResponse(player: {
+    id: string;
+    name: string;
+    position: string;
+    shirtNumber?: number | null;
+    club?: string | null;
+    active: boolean;
+  }) {
     return {
       id: player.id,
       name: player.name,
       position: player.position,
+      shirtNumber: player.shirtNumber ?? undefined,
+      club: player.club ?? undefined,
       active: player.active,
     };
   }
@@ -109,7 +122,14 @@ export class TeamsService {
     name: string;
     flag: string;
     group?: string | null;
-    players: { id: string; name: string; position: string; active: boolean }[];
+    players: {
+      id: string;
+      name: string;
+      position: string;
+      shirtNumber?: number | null;
+      club?: string | null;
+      active: boolean;
+    }[];
   }) {
     return {
       ...this.toTeamResponse(team),

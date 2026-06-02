@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Header } from "@/components/Header";
 import { MatchCard } from "@/components/MatchCard";
 import { usePredictions } from "@/context/PredictionsContext";
@@ -56,26 +57,26 @@ function Dashboard() {
           label: "Partidos hoy",
           value: todayMatches.length,
           icon: CalendarDays,
-          color: "from-primary to-primary-glow",
+          color: "bg-primary",
         },
         {
           label: "Partidos totales",
           value: matches.length,
           icon: Target,
-          color: "from-primary-deep to-primary",
+          color: "bg-primary-deep",
         },
         {
           label: "Finalizados",
           value: matches.filter((match) => match.status === "finished").length,
           icon: Trophy,
-          color: "from-primary to-primary-deep",
+          color: "bg-primary",
         },
         {
           label: "En Desarrollo",
           value: matches.filter((match) => match.status === "live" || match.status === "starting")
             .length,
           icon: TrendingUp,
-          color: "from-primary-glow to-primary",
+          color: "bg-primary-deep",
         },
       ]
     : [
@@ -83,52 +84,76 @@ function Dashboard() {
           label: "Partidos hoy",
           value: todayMatches.length,
           icon: CalendarDays,
-          color: "from-primary to-primary-glow",
+          color: "bg-primary",
         },
         {
           label: "Tus predicciones",
           value: userPredictions.length,
           icon: Target,
-          color: "from-primary-deep to-primary",
+          color: "bg-primary-deep",
         },
         {
           label: "Tus puntos",
           value: user.points,
           icon: Trophy,
-          color: "from-primary to-primary-deep",
+          color: "bg-primary",
         },
         {
           label: "Tu posición",
           value: `#${userRank}`,
           icon: TrendingUp,
-          color: "from-primary-glow to-primary",
+          color: "bg-primary-deep",
         },
       ];
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
-      <div className="mb-8 animate-fade-in">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
-          Hola, {user.name.split(" ")[0]} 👋
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          {isAdmin
-            ? todayMatches.length > 0
-              ? `Tienes ${todayMatches.length} partidos para supervisar hoy`
-              : "No hay partidos hoy para gestionar"
-            : todayMatches.length > 0
-              ? `Tienes ${todayMatches.length} partidos por predecir hoy`
-              : "No hay partidos hoy, revisa próximamente"}
-        </p>
+    <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:py-7">
+      <div className="stadium-hero mb-5 overflow-hidden rounded-lg border border-white/35 p-4 text-white shadow-[var(--shadow-elegant)] animate-fade-in sm:p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+                <div className="mb-3 inline-flex items-center rounded-md border border-white/20 bg-white/10 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white/82 backdrop-blur">
+                  <BrandLogo
+                    size="sm"
+                    framed={false}
+                    showWordmark={false}
+                    className="mr-2"
+                    imageClassName="h-6 w-6"
+                  />
+                  Mundial 2026
+            </div>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
+              Hola, {user.name.split(" ")[0]}
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm text-white/78">
+              {isAdmin
+                ? todayMatches.length > 0
+                  ? `Tenés ${todayMatches.length} partidos para supervisar hoy`
+                  : "No hay partidos hoy para gestionar"
+                : todayMatches.length > 0
+                  ? `Tenés ${todayMatches.length} partidos por predecir hoy`
+                  : "No hay partidos hoy, revisá el calendario próximo"}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-right sm:flex">
+            <div className="rounded-md border border-white/18 bg-white/10 px-3 py-2 backdrop-blur">
+              <div className="text-[11px] uppercase text-white/65">Puntos</div>
+              <div className="text-xl font-black">{user.points}</div>
+            </div>
+            <div className="rounded-md border border-white/18 bg-white/10 px-3 py-2 backdrop-blur">
+              <div className="text-[11px] uppercase text-white/65">Ranking</div>
+              <div className="text-xl font-black">#{userRank || "-"}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s, i) => {
           const Icon = s.icon;
           return (
             <Card
               key={s.label}
-              className="overflow-hidden p-5 transition-all hover:shadow-[var(--shadow-soft)] animate-slide-up"
+              className="overflow-hidden p-3 transition-all hover:border-primary/35 hover:shadow-[var(--shadow-soft)] animate-slide-up sm:p-4"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="flex items-center justify-between">
@@ -136,12 +161,12 @@ function Dashboard() {
                   <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </div>
-                  <div className="mt-1 text-3xl font-bold">{s.value}</div>
+                  <div className="mt-1 text-2xl font-black">{s.value}</div>
                 </div>
                 <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${s.color} shadow-[var(--shadow-soft)]`}
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.color} shadow-[var(--shadow-soft)]`}
                 >
-                  <Icon className="h-6 w-6 text-primary-foreground" />
+                  <Icon className="h-5 w-5 text-primary-foreground" />
                 </div>
               </div>
             </Card>
@@ -150,14 +175,14 @@ function Dashboard() {
       </div>
 
       {!isAdmin && !specialLocked && !specialPred && (
-        <Card className="mb-8 overflow-hidden border-primary/30 bg-[var(--gradient-primary)] p-5 text-primary-foreground shadow-[var(--shadow-soft)] animate-slide-up">
+        <Card className="mb-5 overflow-hidden border-primary/30 bg-[var(--gradient-primary)] p-4 text-primary-foreground shadow-[var(--shadow-soft)] animate-slide-up">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
               <Star className="h-6 w-6" />
             </div>
             <div className="min-w-[200px] flex-1">
               <div className="font-bold">¡Hacé tu pronóstico del Mundial!</div>
-              <div className="text-sm text-[#081a2b]/82">
+              <div className="text-sm text-primary-foreground/82">
                 Campeón, goleador y final. Tiempo restante: {timeUntilSpecialDeadline()}
               </div>
             </div>
@@ -171,7 +196,7 @@ function Dashboard() {
       )}
 
       {!isAdmin && !specialLocked && specialPred && (
-        <Card className="mb-8 border-primary/20 bg-primary/5 p-4 animate-slide-up">
+        <Card className="mb-5 border-primary/20 bg-primary/5 p-3 animate-slide-up">
           <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center">
             <Star className="h-4 w-4 text-primary" />
             <span>
@@ -188,9 +213,9 @@ function Dashboard() {
         </Card>
       )}
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-black">
             {isAdmin ? "Partidos del día" : "Calendario de hoy"}
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -218,7 +243,7 @@ function Dashboard() {
           </p>
         </Card>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {todayMatches.map((m, i) => (
             <div key={m.id} className="animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
               <MatchCard match={m} />

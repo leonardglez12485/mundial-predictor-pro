@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { BrandLogo } from "@/components/BrandLogo";
+import worldCupLogo from "@/assets/world-cup-2026-mark.png";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import heroImg from "@/assets/uruguay-hero.png";
 import seleccionImg from "@/assets/seleccion1.jpg";
@@ -37,138 +38,150 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-svh overflow-y-auto bg-[#cfefff] text-[#081a2b]">
-      <main className="grid min-h-svh lg:grid-cols-[0.98fr_0.82fr]">
-        <section className="relative hidden overflow-hidden border-r border-[#8fc9eb] px-8 py-8 lg:flex lg:min-h-0 lg:px-10 xl:px-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.92),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(124,196,232,0.32),_transparent_42%),linear-gradient(180deg,_rgba(233,248,255,0.96),_rgba(201,238,255,0.94))]" />
-          <div className="relative mx-auto flex h-full w-full max-w-3xl flex-col justify-center gap-8 lg:gap-10">
-            <div className="max-w-lg text-left">
-              <h1 className="text-4xl font-black leading-[0.92] tracking-[-0.06em] text-[#081a2b] lg:text-5xl xl:text-6xl">
-                Balero World Cup
-              </h1>
-              <p className="mt-4 max-w-md text-base leading-7 text-[#12304a]/86 lg:text-lg">
-                Predecí los partidos del Mundial, sumá puntos y subí en el ranking. Cree en grande.
+    <div className="min-h-svh overflow-y-auto bg-[var(--gradient-soft)] text-foreground">
+      <main className="grid min-h-svh lg:grid-cols-[1.18fr_0.58fr] xl:grid-cols-[1.24fr_0.52fr]">
+        <section className="stadium-hero relative hidden overflow-hidden border-r border-white/20 px-8 py-8 lg:flex lg:min-h-0 lg:px-10 xl:px-12">
+          <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col justify-center gap-8 lg:gap-10">
+            <div className="max-w-xl text-left">
+              <BrandLogo
+                size="lg"
+                framed={false}
+                subtitle="Mundial 2026"
+                className="mb-4"
+                titleClassName="text-4xl font-black leading-[0.92] text-white lg:text-5xl xl:text-6xl"
+                subtitleClassName="text-white/72"
+                imageClassName="h-18 w-18 sm:h-20 sm:w-20"
+              />
+              <p className="mt-4 max-w-md text-base leading-7 text-white/78 lg:text-lg">
+                Predicciones, ranking y calendario en una experiencia compacta con una identidad
+                más mundialista.
               </p>
             </div>
 
-            <div className="relative h-[44vh] min-h-[340px] w-full max-w-[620px] lg:h-[48vh] xl:h-[52vh]">
-              <div className="absolute left-0 top-[8%] z-10 w-[31%] rounded-[2rem] border border-white/80 bg-white/82 p-3 shadow-[0_24px_60px_rgba(8,26,43,0.14)] backdrop-blur">
-                <div className="overflow-hidden rounded-[1.5rem] bg-[#e8f7ff]">
+            <div className="relative h-[48vh] min-h-[380px] w-full max-w-[760px] lg:h-[56vh] xl:h-[60vh]">
+              <div className="absolute left-0 top-[8%] z-10 w-[31%] rounded-lg border border-white/25 bg-white/15 p-2 shadow-[0_24px_60px_rgba(8,26,43,0.22)] backdrop-blur">
+                <div className="overflow-hidden rounded-md bg-white/10">
                   <img
                     src={galleryImg}
                     alt="Galería de selección"
-                    className="h-[170px] w-full object-cover object-center xl:h-[190px]"
+                    className="h-[190px] w-full object-cover object-center xl:h-[220px]"
                     loading="eager"
                   />
                 </div>
-                <div className="mt-3 h-3 w-14 rounded-full bg-[#a9d6ef]" />
-                <div className="mt-2 h-3 w-20 rounded-full bg-[#d7edf9]" />
+                <div className="mt-3 h-3 w-14 rounded-full bg-primary-glow/80" />
+                <div className="mt-2 h-3 w-20 rounded-full bg-white/75" />
               </div>
 
-              <div className="absolute left-[28%] top-0 z-20 w-[48%] rounded-[2.4rem] border border-white/85 bg-white/76 p-4 shadow-[0_34px_80px_rgba(8,26,43,0.16)] backdrop-blur xl:w-[50%]">
-                <div className="overflow-hidden rounded-[2rem] bg-[#d7effc]">
+              <div className="absolute left-[28%] top-0 z-20 w-[48%] rounded-lg border border-white/30 bg-white/18 p-3 shadow-[0_34px_80px_rgba(8,26,43,0.24)] backdrop-blur xl:w-[50%]">
+                <div className="overflow-hidden rounded-md bg-white/10">
                   <img
                     src={heroImg}
                     alt="Selección uruguaya — Balero World Cup"
-                    className="h-[320px] w-full object-cover object-top lg:h-[350px] xl:h-[390px]"
+                    className="h-[360px] w-full object-cover object-top lg:h-[420px] xl:h-[470px]"
                     loading="eager"
                   />
                 </div>
                 <div className="pointer-events-none absolute left-6 top-5 h-1.5 w-24 rounded-full bg-white/85" />
-                <div className="absolute right-4 top-14 rounded-2xl bg-[#4f8fb7] px-4 py-2 text-sm font-bold text-[#081a2b] shadow-[0_12px_24px_rgba(8,26,43,0.16)]">
+                <div className="absolute right-4 top-14 rounded-md bg-accent px-3 py-1.5 text-sm font-bold text-accent-foreground shadow-[0_12px_24px_rgba(8,26,43,0.2)]">
                   16:45
                 </div>
-                <div className="absolute -bottom-5 left-7 rounded-[1.5rem] border border-white/80 bg-white/92 px-5 py-3 text-sm font-semibold text-[#12304a] shadow-[0_18px_40px_rgba(8,26,43,0.14)]">
+                <div className="absolute -bottom-4 left-5 rounded-md border border-white/30 bg-white/88 px-4 py-2 text-sm font-semibold text-primary-deep shadow-[0_18px_40px_rgba(8,26,43,0.18)]">
                   Ranking en juego
                 </div>
               </div>
 
-              <div className="absolute bottom-0 left-[14%] z-30 w-[34%] rounded-[2rem] border border-white/80 bg-white/84 p-3 shadow-[0_22px_50px_rgba(8,26,43,0.14)] backdrop-blur">
-                <div className="overflow-hidden rounded-[1.5rem] bg-[#e3f5ff]">
+              <div className="absolute bottom-0 left-[14%] z-30 w-[34%] rounded-lg border border-white/25 bg-white/16 p-2 shadow-[0_22px_50px_rgba(8,26,43,0.22)] backdrop-blur">
+                <div className="overflow-hidden rounded-md bg-white/10">
                   <img
                     src={seleccionImg}
                     alt="Selección celebrando"
-                    className="h-[180px] w-full object-cover object-center xl:h-[210px]"
+                    className="h-[205px] w-full object-cover object-center xl:h-[235px]"
                     loading="eager"
                   />
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-[#38aaf0]" />
-                  <div className="h-3 flex-1 rounded-full bg-[#d7edf9]" />
+                  <span className="h-3 w-3 rounded-full bg-primary" />
+                  <div className="h-3 flex-1 rounded-full bg-white/72" />
                 </div>
               </div>
 
-              <div className="absolute bottom-[12%] right-[3%] z-40 flex h-20 w-20 items-center justify-center rounded-full bg-[#38aaf0] shadow-[0_20px_40px_rgba(8,26,43,0.2)] xl:h-24 xl:w-24">
+              <div className="absolute bottom-[12%] right-[3%] z-40 flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-[0_20px_40px_rgba(8,26,43,0.25)] xl:h-24 xl:w-24">
                 <div className="h-8 w-8 rounded-full border-4 border-white/95 xl:h-10 xl:w-10" />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="flex min-h-svh items-center justify-center px-4 py-8 sm:px-8 lg:min-h-0 lg:px-10">
-          <div className="w-full max-w-[380px]">
-            <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-black tracking-[-0.04em] text-[#081a2b] sm:text-[2rem]">
-                Iniciar sesión
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#12304a]/78 sm:text-base">
-                Accedé para seguir cargando tus predicciones del Mundial.
-              </p>
+        <section className="flex min-h-svh items-center justify-center px-[15px] py-8 lg:min-h-0">
+          <div className="w-full max-w-[392px]">
+            <div className="flex items-center gap-3 text-left sm:gap-4">
+              <img
+                src={worldCupLogo}
+                alt="Logo Mundial 2026"
+                className="h-16 w-auto flex-shrink-0 object-contain sm:h-20"
+                loading="eager"
+              />
+              <div className="min-w-0">
+                <h2 className="text-[1.8rem] font-black text-foreground sm:text-[2rem]">
+                  Iniciar sesión
+                </h2>
+                <p className="mt-1 max-w-[28ch] text-sm leading-5 text-muted-foreground sm:text-[15px]">
+                  Accedé para seguir cargando tus predicciones del Mundial.
+                </p>
+              </div>
             </div>
 
-            <Card className="mt-6 border-[#7abde4]/70 bg-white/92 p-5 shadow-[0_24px_60px_rgba(8,26,43,0.12)] backdrop-blur sm:p-6">
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <Input
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="Email o usuario"
-                  className="h-13 rounded-2xl border-[#8ec8e8] bg-[#f4fbff] px-4 text-[15px] text-[#081a2b] placeholder:text-[#51708a] focus-visible:ring-[#2d86bb]"
-                  autoComplete="username"
-                />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="Contraseña"
-                  className="h-13 rounded-2xl border-[#8ec8e8] bg-[#f4fbff] px-4 text-[15px] text-[#081a2b] placeholder:text-[#51708a] focus-visible:ring-[#2d86bb]"
-                  autoComplete="current-password"
-                />
+            <form onSubmit={handleSubmit} className="mt-6 space-y-3 px-4 py-5 sm:px-5 sm:py-6">
+              <Input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Email o usuario"
+                className=" rounded-none border-x-0 border-t-0 border-b-[1.5px] border-primary/30 bg-transparent px-0 text-[15px] shadow-none focus-visible:ring-0 focus-visible:border-primary"
+                autoComplete="username"
+              />
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Contraseña"
+                className="rounded-none border-x-0 border-t-0 border-b-[1.5px] border-primary/30 bg-transparent px-0 text-[15px] shadow-none focus-visible:ring-0 focus-visible:border-primary"
+                autoComplete="current-password"
+              />
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-12 w-full rounded-2xl bg-[#2386c8] text-base font-bold text-[#081a2b] shadow-[0_20px_40px_rgba(35,134,200,0.28)] transition-all hover:bg-[#1d76b0]"
-                >
-                  {loading ? "Ingresando..." : "Iniciar sesión"}
-                </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mt-[40px] h-11 w-full rounded-2xl text-base font-bold"
+              >
+                {loading ? "Ingresando..." : "Iniciar sesión"}
+              </Button>
 
-                <div className="pt-1 text-center">
-                  <button
-                    type="button"
-                    className="text-sm font-medium text-[#12304a] transition-colors hover:text-[#0b2640] hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                </div>
-
-                <div className="my-1 h-px bg-[#b8ddf1]" />
-
-                <Button
-                  asChild
+              <div className="pt-1 text-center">
+                <button
                   type="button"
-                  variant="outline"
-                  className="h-12 w-full rounded-2xl border-[#2386c8] bg-[#eaf7ff] text-base font-bold text-[#0d2b47] shadow-none hover:bg-[#d9f0ff] hover:text-[#0b2640]"
+                  className="text-sm font-medium text-primary-deep transition-colors hover:text-foreground hover:underline"
                 >
-                  <Link to="/register">Crear cuenta nueva</Link>
-                </Button>
-              </form>
-            </Card>
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
 
-            <p className="mt-4 text-center text-sm text-[#12304a]/78 lg:text-left">
-              <strong className="font-extrabold text-[#081a2b]">Crea una cuenta</strong> para
+              <div className="my-1 h-px bg-border" />
+
+              <p className="pt-1 text-center text-sm text-muted-foreground">
+                <Link
+                  to="/register"
+                  className="font-semibold text-primary-deep transition-colors hover:text-foreground hover:underline"
+                >
+                  Crear cuenta nueva
+                </Link>
+              </p>
+            </form>
+
+            <p className="mt-4 text-left text-sm text-muted-foreground">
+              <strong className="font-extrabold text-foreground">Creá una cuenta</strong> para
               predecir partidos del Mundial.
             </p>
           </div>
