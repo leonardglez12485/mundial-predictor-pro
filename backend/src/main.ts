@@ -37,7 +37,6 @@ function buildCorsOptions(configService: ConfigService): CorsOptions {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const port = configService.get<number>("PORT", 3001);
 
   app.setGlobalPrefix("api");
   app.use(cookieParser());
@@ -59,16 +58,7 @@ async function bootstrap() {
     });
   }
 
-  app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://TU-APP.vercel.app',  // ← reemplazá con tu URL real de Vercel
-      /\.vercel\.app$/,
-    ],
-    credentials: true,
-  });
-
-  await app.listen(process.env.PORT ?? 3001); 
+  await app.listen(process.env.PORT ?? 3001);
 }
 
 void bootstrap();
