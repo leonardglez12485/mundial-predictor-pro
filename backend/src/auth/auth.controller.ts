@@ -17,10 +17,9 @@ export class AuthController {
   ) {}
 
   @Post("register")
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) response: Response) {
-    const session = await this.authService.register(dto);
-    this.writeRefreshCookie(response, session.refreshToken);
-    return this.toClientSession(session);
+  async register(@Body() dto: RegisterDto) {
+    await this.authService.register(dto);
+    return null;
   }
 
   @Post("login")
@@ -51,7 +50,12 @@ export class AuthController {
     return this.authService.me(user.sub);
   }
 
-  private toClientSession(session: { accessToken: string; refreshToken: string; expiresIn: string; user: unknown }) {
+  private toClientSession(session: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: string;
+    user: unknown;
+  }) {
     return {
       accessToken: session.accessToken,
       expiresIn: session.expiresIn,

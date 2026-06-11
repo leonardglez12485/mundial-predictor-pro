@@ -1,54 +1,17 @@
-import { MatchStatus, PredictionWinner, PrismaClient, UserRole } from "@prisma/client";
+import { MatchStatus, PrismaClient, UserRole } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { WORLD_CUP_TEAMS } from "./world-cup-teams";
 
 const prisma = new PrismaClient();
 const RESET_CONFIRMATION_FLAG = "--confirm-reset";
 
-const users = [
-  {
-    id: "u-admin",
-    name: "Admin",
-    email: "admin@balero.com",
-    password: "Realmadridfc*13",
-    role: UserRole.admin,
-  },
-  {
-    id: "u1",
-    name: "Diego Forlán",
-    email: "diego@uy.com",
-    password: "demo1234",
-    role: UserRole.user,
-  },
-  {
-    id: "u2",
-    name: "Luis Suárez",
-    email: "luis@uy.com",
-    password: "demo1234",
-    role: UserRole.user,
-  },
-  {
-    id: "u3",
-    name: "Edinson Cavani",
-    email: "edi@uy.com",
-    password: "demo1234",
-    role: UserRole.user,
-  },
-  {
-    id: "u4",
-    name: "Federico Valverde",
-    email: "fede@uy.com",
-    password: "demo1234",
-    role: UserRole.user,
-  },
-  {
-    id: "u5",
-    name: "Darwin Núñez",
-    email: "darwin@uy.com",
-    password: "demo1234",
-    role: UserRole.user,
-  },
-];
+const adminUser = {
+  id: "u-admin",
+  name: "Admin",
+  email: "admin@balero.com",
+  password: "Realmadridfc*13",
+  role: UserRole.admin,
+};
 
 const now = new Date();
 const at = (hoursFromNow: number) =>
@@ -64,50 +27,6 @@ function avatarFromName(name: string) {
     .toUpperCase();
 }
 
-function calculatePoints(
-  prediction: {
-    winner: PredictionWinner;
-    homeGoals: number;
-    awayGoals: number;
-    scorers: string[];
-  },
-  result: {
-    homeGoals: number;
-    awayGoals: number;
-    scorers: string[];
-  },
-) {
-  let points = 0;
-  const actualWinner =
-    result.homeGoals > result.awayGoals
-      ? PredictionWinner.home
-      : result.homeGoals < result.awayGoals
-        ? PredictionWinner.away
-        : PredictionWinner.draw;
-
-  if (prediction.winner === actualWinner) {
-    points += 3;
-  }
-
-  if (prediction.homeGoals === result.homeGoals && prediction.awayGoals === result.awayGoals) {
-    points += 5;
-  }
-
-  const actualScorers = [...result.scorers];
-  for (const scorer of prediction.scorers) {
-    const scorerIndex = actualScorers.findIndex(
-      (actualScorer) => actualScorer.trim().toLowerCase() === scorer.trim().toLowerCase(),
-    );
-
-    if (scorerIndex >= 0) {
-      points += 2;
-      actualScorers.splice(scorerIndex, 1);
-    }
-  }
-
-  return points;
-}
-
 async function main() {
   if (!process.argv.includes(RESET_CONFIRMATION_FLAG)) {
     throw new Error(
@@ -115,6 +34,7 @@ async function main() {
     );
   }
 
+  // Limpiar todas las tablas en orden correcto
   await prisma.player.deleteMany();
   await prisma.predictionScorer.deleteMany();
   await prisma.prediction.deleteMany();
@@ -124,23 +44,24 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.team.deleteMany();
 
+  // Cargar equipos
   await prisma.team.createMany({ data: WORLD_CUP_TEAMS });
   const teamsInDb = await prisma.team.findMany();
   const teamByCode = new Map(teamsInDb.map((team) => [team.code, team]));
 
-  for (const user of users) {
-    await prisma.user.create({
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        avatar: avatarFromName(user.name),
-        passwordHash: await bcrypt.hash(user.password, 10),
-        role: user.role,
-      },
-    });
-  }
+  // Crear solo el usuario admin
+  await prisma.user.create({
+    data: {
+      id: adminUser.id,
+      name: adminUser.name,
+      email: adminUser.email,
+      avatar: avatarFromName(adminUser.name),
+      passwordHash: await bcrypt.hash(adminUser.password, 10),
+      role: adminUser.role,
+    },
+  });
 
+  // Cargar partidos
   const matches = [
     { id: "m1", home: "uy", away: "ar", kickoff: at(2), status: MatchStatus.pending, group: "A" },
     { id: "m2", home: "br", away: "es", kickoff: at(4.5), status: MatchStatus.pending, group: "B" },
@@ -198,79 +119,7 @@ async function main() {
     });
   }
 
-  const predictionSeeds = [
-    {
-      userId: "u1",
-      matchId: "m6",
-      winner: PredictionWinner.home,
-      homeGoals: 3,
-      awayGoals: 2,
-      scorers: ["Messi", "Mbappé"],
-    },
-    {
-      userId: "u2",
-      matchId: "m6",
-      winner: PredictionWinner.home,
-      homeGoals: 2,
-      awayGoals: 1,
-      scorers: ["Messi", "Álvarez"],
-    },
-    {
-      userId: "u3",
-      matchId: "m6",
-      winner: PredictionWinner.draw,
-      homeGoals: 2,
-      awayGoals: 2,
-      scorers: ["Mbappé"],
-    },
-    {
-      userId: "u4",
-      matchId: "m6",
-      winner: PredictionWinner.home,
-      homeGoals: 1,
-      awayGoals: 0,
-      scorers: ["Messi"],
-    },
-    {
-      userId: "u5",
-      matchId: "m6",
-      winner: PredictionWinner.away,
-      homeGoals: 1,
-      awayGoals: 2,
-      scorers: ["Mbappé", "Griezmann"],
-    },
-  ];
-
-  for (const prediction of predictionSeeds) {
-    await prisma.prediction.create({
-      data: {
-        userId: prediction.userId,
-        matchId: prediction.matchId,
-        winner: prediction.winner,
-        homeGoals: prediction.homeGoals,
-        awayGoals: prediction.awayGoals,
-        scorers: {
-          create: prediction.scorers.map((scorer, index) => ({
-            name: scorer,
-            sortOrder: index,
-          })),
-        },
-      },
-    });
-  }
-
-  const finishedMatchResult = matches.find((match) => match.id === "m6")?.result;
-  if (!finishedMatchResult) {
-    throw new Error("No se encontró el resultado final base para calcular puntos");
-  }
-
-  for (const prediction of predictionSeeds) {
-    const points = calculatePoints(prediction, finishedMatchResult);
-    await prisma.user.update({
-      where: { id: prediction.userId },
-      data: { points },
-    });
-  }
+  console.log("✅ Seed completado: admin + equipos + partidos cargados.");
 }
 
 main()

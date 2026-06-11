@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import worldCupLogo from "@/assets/world-cup-2026-mark.png";
@@ -53,8 +53,8 @@ function LoginPage() {
                 imageClassName="h-18 w-18 sm:h-20 sm:w-20"
               />
               <p className="mt-4 max-w-md text-base leading-7 text-white/78 lg:text-lg">
-                Predicciones, ranking y calendario en una experiencia compacta con una identidad
-                más mundialista.
+                Predicciones, ranking y calendario en una experiencia compacta con una identidad más
+                mundialista.
               </p>
             </div>
 
@@ -171,12 +171,7 @@ function LoginPage() {
               <div className="my-1 h-px bg-border" />
 
               <p className="pt-1 text-center text-sm text-muted-foreground">
-                <Link
-                  to="/register"
-                  className="font-semibold text-primary-deep transition-colors hover:text-foreground hover:underline"
-                >
-                  Crear cuenta nueva
-                </Link>
+                El registro está cerrado para esta edición.
               </p>
             </form>
 

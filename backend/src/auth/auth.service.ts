@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { User } from "@prisma/client";
 import { JwtService } from "@nestjs/jwt";
@@ -16,8 +16,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const user = await this.usersService.createUser(dto);
-    return this.createSession(user);
+    throw new ForbiddenException("El registro público está deshabilitado");
   }
 
   async login(dto: LoginDto) {
