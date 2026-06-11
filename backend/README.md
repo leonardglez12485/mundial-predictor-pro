@@ -54,8 +54,23 @@ DATABASE_URL="file:./dev.db"
 JWT_SECRET="dev-secret-change-me"
 PORT=3001
 COOKIE_SECURE=false
+COOKIE_SAME_SITE=lax
 CORS_ORIGINS="http://localhost:5173,http://localhost:3000"
 SWAGGER_ENABLED=true
+```
+
+En producción con frontend en Vercel y backend en Render, configurá:
+
+```env
+COOKIE_SECURE=true
+COOKIE_SAME_SITE=none
+CORS_ORIGINS="https://TU-FRONTEND.vercel.app"
+```
+
+En Vercel, el frontend debe tener:
+
+```env
+VITE_API_BASE_URL="https://mundial-predictor-pro-1.onrender.com/api"
 ```
 
 ## Rutas principales

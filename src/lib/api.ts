@@ -21,8 +21,7 @@ type RequestOptions = {
   retryOnUnauthorized?: boolean;
 };
 
-//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
-const API_BASE_URL = "https://mundial-predictor-pro-1.onrender.com/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
 
 let accessToken: string | null = null;
 let refreshPromise: Promise<AuthSession | null> | null = null;
@@ -105,7 +104,7 @@ async function request<T>(
   }
 
   let response: Response;
-  //Otro 
+  //Otro
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -116,7 +115,7 @@ async function request<T>(
     });
   } catch (error) {
     throw new ApiError(
-      "No se pudo conectar con el backend. Verificá que la API esté corriendo en http://localhost:3001.",
+      `No se pudo conectar con el backend. Verificá que la API esté disponible en ${API_BASE_URL}.`,
       0,
       error,
     );

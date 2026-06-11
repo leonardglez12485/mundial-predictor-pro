@@ -67,7 +67,7 @@ export class AuthController {
   private writeRefreshCookie(response: Response, refreshToken: string) {
     response.cookie(REFRESH_COOKIE_NAME, refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: this.getCookieSameSite(),
       secure: this.configService.get<string>("COOKIE_SECURE", "false") === "true",
       maxAge: REFRESH_TOKEN_MAX_AGE_MS,
       path: "/",
@@ -77,9 +77,14 @@ export class AuthController {
   private clearRefreshCookie(response: Response) {
     response.clearCookie(REFRESH_COOKIE_NAME, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: this.getCookieSameSite(),
       secure: this.configService.get<string>("COOKIE_SECURE", "false") === "true",
       path: "/",
     });
+  }
+
+  private getCookieSameSite(): "lax" | "strict" | "none" {
+    const value = this.configService.get<string>("COOKIE_SAME_SITE", "lax").toLowerCase();
+    return value === "none" || value === "strict" ? value : "lax";
   }
 }
