@@ -105,6 +105,7 @@ async function request<T>(
   }
 
   let response: Response;
+  //Otro 
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
