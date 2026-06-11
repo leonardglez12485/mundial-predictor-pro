@@ -3,11 +3,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { usePredictions } from "@/context/PredictionsContext";
-import {
-  isSpecialPredictionLocked,
-  isWorldCupStarted,
-  timeUntilSpecialDeadline,
-} from "@/lib/scoring";
+import { isSpecialPredictionLocked, timeUntilSpecialDeadline } from "@/lib/scoring";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,7 +103,6 @@ function LoadedSpecialForm({
 }) {
   const navigate = useNavigate();
   const locked = isSpecialPredictionLocked();
-  const started = isWorldCupStarted();
   const groupedTeams = groupTeams(teams);
   const teamMap = createTeamMap(teams);
   const [championCode, setChampionCode] = useState(existing?.championCode ?? "");
@@ -157,7 +152,7 @@ function LoadedSpecialForm({
           <div className="min-w-0">
             <h1 className="text-xl font-bold sm:text-2xl">Mi pronóstico del Mundial</h1>
             <p className="text-sm text-muted-foreground">
-              Campeón, goleador y final. Editable hasta 1 día antes del Mundial.
+              Campeón, goleador y final. Editable hasta el 1 de julio.
             </p>
           </div>
         </div>
@@ -166,7 +161,7 @@ function LoadedSpecialForm({
           <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
             ⏱️ Tiempo restante para modificar:{" "}
             <strong className="text-primary-deep">{timeUntilSpecialDeadline()}</strong>
-            <div className="mt-1 text-xs text-muted-foreground">Cierre: 10 de junio de 2026</div>
+            <div className="mt-1 text-xs text-muted-foreground">Cierre: 1 de julio de 2026</div>
           </div>
         )}
 
@@ -175,11 +170,7 @@ function LoadedSpecialForm({
             <Lock className="mt-0.5 h-5 w-5 flex-shrink-0 text-destructive" />
             <div>
               <div className="font-semibold text-destructive">Pronóstico bloqueado</div>
-              <div className="text-destructive/80">
-                {started
-                  ? "El Mundial ya comenzó. Solo podés predecir los partidos del día."
-                  : "El plazo para modificar ya cerró."}
-              </div>
+              <div className="text-destructive/80">El plazo para modificar ya cerró.</div>
             </div>
           </div>
         )}

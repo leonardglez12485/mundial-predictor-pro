@@ -336,7 +336,8 @@ function LoadedPredictionForm({
             <div>
               <Label className="mb-3 block text-base font-semibold">Goleadores</Label>
               <p className="mb-3 text-xs text-muted-foreground">
-                Si el gol es en contra, elegí <span className="font-semibold text-foreground">{OWN_GOAL_SCORER_NAME}</span>.
+                Si el gol es en contra, elegí{" "}
+                <span className="font-semibold text-foreground">{OWN_GOAL_SCORER_NAME}</span>.
               </p>
               <div className="grid gap-4 md:grid-cols-2">
                 <PredictionScorerSection
@@ -494,14 +495,12 @@ function buildPredictionPlayerOptions(
   selectedScorers: string[],
 ) {
   const ownGoalValue = serializeScorerEntry(teamCode, OWN_GOAL_SCORER_NAME);
-  const activeOptionMap = new Map(
-    [
-      [ownGoalValue, OWN_GOAL_SCORER_NAME],
-      ...players
-        .filter((player) => player.active)
-        .map((player) => [serializeScorerEntry(teamCode, player.name), player.name]),
-    ],
-  );
+  const activeOptionMap = new Map<string, string>([
+    [ownGoalValue, OWN_GOAL_SCORER_NAME] as const,
+    ...players
+      .filter((player) => player.active)
+      .map((player) => [serializeScorerEntry(teamCode, player.name), player.name] as const),
+  ]);
   const optionValues = Array.from(
     new Set([...activeOptionMap.keys(), ...selectedScorers.filter(Boolean)]),
   );
