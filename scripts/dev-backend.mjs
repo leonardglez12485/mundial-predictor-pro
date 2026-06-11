@@ -3,7 +3,7 @@ import net from "node:net";
 
 const port = Number.parseInt(process.env.BACKEND_PORT ?? "3001", 10);
 const host = process.env.BACKEND_HOST ?? "127.0.0.1";
-const apiBaseUrl = process.env.VITE_API_BASE_URL ?? `http://localhost:${port}/api`;
+const apiBaseUrl = process.env.VITE_API_BASE_URL ?? `https://mundial-predictor-pro-1.onrender.com/api`;
 
 function isPortInUse(targetPort, targetHost) {
   return new Promise((resolve) => {
