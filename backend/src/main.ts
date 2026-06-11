@@ -59,7 +59,16 @@ async function bootstrap() {
     });
   }
 
-  await app.listen(port);
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'https://TU-APP.vercel.app',  // ← reemplazá con tu URL real de Vercel
+      /\.vercel\.app$/,
+    ],
+    credentials: true,
+  });
+
+  await app.listen(process.env.PORT ?? 3001); 
 }
 
 void bootstrap();

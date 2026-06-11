@@ -1,0 +1,1 @@
+function n(a){return Object.fromEntries(a.map(e=>[e.code,e]))}function c(a){const e=new Map;for(const o of a){const r=o.group??"Sin grupo",t=e.get(r)??[];t.push(o),e.set(r,t)}return[...e.entries()].sort(([o],[r])=>o.localeCompare(r,"es")).map(([o,r])=>({group:o,teams:[...r].sort((t,s)=>t.name.localeCompare(s.name,"es"))}))}export{n as c,c as g};
