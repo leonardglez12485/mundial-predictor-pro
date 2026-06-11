@@ -3,9 +3,9 @@ import { MatchStatus, PredictionWinner, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { parseStoredScorer, scorersMatch } from "./scorer-entry";
 
-export const PREDICTION_LOCK_MINUTES = 60;
+export const PREDICTION_LOCK_MINUTES = 15;
 export const WORLD_CUP_START_ISO = "2026-06-11T00:00:00.000Z";
-export const SPECIAL_PREDICTION_DEADLINE_ISO = "2026-06-10T00:00:00.000Z";
+export const SPECIAL_PREDICTION_DEADLINE_ISO = "2026-07-01T00:00:00.000Z";
 
 @Injectable()
 export class ScoringService {
@@ -44,26 +44,30 @@ export class ScoringService {
     return Date.now() >= new Date(SPECIAL_PREDICTION_DEADLINE_ISO).getTime();
   }
 
-  calculatePredictionPoints(prediction: {
-    winner: PredictionWinner;
-    homeGoals: number;
-    awayGoals: number;
-    scorers: { name: string }[];
-  }, match: {
-    homeGoals: number | null;
-    awayGoals: number | null;
-    scorers: { name: string }[];
-  }): number {
+  calculatePredictionPoints(
+    prediction: {
+      winner: PredictionWinner;
+      homeGoals: number;
+      awayGoals: number;
+      scorers: { name: string }[];
+    },
+    match: {
+      homeGoals: number | null;
+      awayGoals: number | null;
+      scorers: { name: string }[];
+    },
+  ): number {
     if (match.homeGoals === null || match.awayGoals === null) {
       return 0;
     }
 
     let points = 0;
-    const actualWinner = match.homeGoals > match.awayGoals
-      ? PredictionWinner.home
-      : match.homeGoals < match.awayGoals
-        ? PredictionWinner.away
-        : PredictionWinner.draw;
+    const actualWinner =
+      match.homeGoals > match.awayGoals
+        ? PredictionWinner.home
+        : match.homeGoals < match.awayGoals
+          ? PredictionWinner.away
+          : PredictionWinner.draw;
 
     if (prediction.winner === actualWinner) {
       points += 3;
@@ -75,8 +79,8 @@ export class ScoringService {
 
     const remainingScorers = [...match.scorers.map((scorer) => parseStoredScorer(scorer.name))];
     for (const scorer of prediction.scorers) {
-      const scorerIndex = remainingScorers.findIndex(
-        (actualScorer) => scorersMatch(actualScorer, parseStoredScorer(scorer.name)),
+      const scorerIndex = remainingScorers.findIndex((actualScorer) =>
+        scorersMatch(actualScorer, parseStoredScorer(scorer.name)),
       );
 
       if (scorerIndex >= 0) {
@@ -123,16 +127,14 @@ export class ScoringService {
       }
     }
 
-    await this.prisma.$transaction(
-      [
-        this.prisma.user.updateMany({
-          where: { role: UserRole.admin },
-          data: { points: 0 },
-        }),
-        ...[...pointsByUser.entries()].map(([userId, points]) =>
-          this.prisma.user.update({ where: { id: userId }, data: { points } }),
-        ),
-      ],
-    );
+    await this.prisma.$transaction([
+      this.prisma.user.updateMany({
+        where: { role: UserRole.admin },
+        data: { points: 0 },
+      }),
+      ...[...pointsByUser.entries()].map(([userId, points]) =>
+        this.prisma.user.update({ where: { id: userId }, data: { points } }),
+      ),
+    ]);
   }
 }

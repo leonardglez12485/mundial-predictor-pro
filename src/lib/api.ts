@@ -21,7 +21,8 @@ type RequestOptions = {
   retryOnUnauthorized?: boolean;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+const API_BASE_URL = "https://mundial-predictor-pro-1.onrender.com/api";
 
 let accessToken: string | null = null;
 let refreshPromise: Promise<AuthSession | null> | null = null;
@@ -104,6 +105,7 @@ async function request<T>(
   }
 
   let response: Response;
+  //Otro 
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {

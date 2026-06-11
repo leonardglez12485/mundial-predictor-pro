@@ -1,12 +1,12 @@
 import type { Match, Prediction } from "./types";
 import { parseScorerEntry, scorerEntriesMatch } from "./scorer-entry";
 
-export const PREDICTION_LOCK_MINUTES = 60;
+export const PREDICTION_LOCK_MINUTES = 15;
 
 // Mundial 2026 — kick-off oficial: 11 de junio 2026
 export const WORLD_CUP_START_ISO = "2026-06-11T00:00:00.000Z";
-// Deadline para predicciones especiales: 1 día antes
-export const SPECIAL_PREDICTION_DEADLINE_ISO = "2026-06-10T00:00:00.000Z";
+// Deadline para predicciones especiales: 1 de julio 2026
+export const SPECIAL_PREDICTION_DEADLINE_ISO = "2026-07-01T00:00:00.000Z";
 
 export function isWorldCupStarted(): boolean {
   return Date.now() >= new Date(WORLD_CUP_START_ISO).getTime();
@@ -38,17 +38,28 @@ export function calculatePoints(prediction: Prediction, match: Match): number {
   if (!match.result) return 0;
   let pts = 0;
   const actualWinner: "home" | "away" | "draw" =
-    match.result.homeGoals > match.result.awayGoals ? "home" :
-    match.result.homeGoals < match.result.awayGoals ? "away" : "draw";
+    match.result.homeGoals > match.result.awayGoals
+      ? "home"
+      : match.result.homeGoals < match.result.awayGoals
+        ? "away"
+        : "draw";
 
   if (prediction.winner === actualWinner) pts += 3;
-  if (prediction.homeGoals === match.result.homeGoals && prediction.awayGoals === match.result.awayGoals) pts += 5;
+  if (
+    prediction.homeGoals === match.result.homeGoals &&
+    prediction.awayGoals === match.result.awayGoals
+  )
+    pts += 5;
 
-  const actualScorers = [...(match.result.scorerEntries.length > 0
-    ? match.result.scorerEntries
-    : match.result.scorers.map((name) => ({ name })))];
+  const actualScorers = [
+    ...(match.result.scorerEntries.length > 0
+      ? match.result.scorerEntries
+      : match.result.scorers.map((name) => ({ name }))),
+  ];
   for (const s of prediction.scorers) {
-    const idx = actualScorers.findIndex((actualScorer) => scorerEntriesMatch(actualScorer, parseScorerEntry(s)));
+    const idx = actualScorers.findIndex((actualScorer) =>
+      scorerEntriesMatch(actualScorer, parseScorerEntry(s)),
+    );
     if (idx >= 0) {
       pts += 2;
       actualScorers.splice(idx, 1);

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import worldCupLogo from "@/assets/world-cup-2026-mark.png";
@@ -171,7 +171,12 @@ function LoginPage() {
               <div className="my-1 h-px bg-border" />
 
               <p className="pt-1 text-center text-sm text-muted-foreground">
-                El registro está cerrado para esta edición.
+                <Link
+                  to="/register"
+                  className="font-semibold text-primary-deep transition-colors hover:text-foreground hover:underline"
+                >
+                  Crear cuenta nueva
+                </Link>
               </p>
             </form>
 
