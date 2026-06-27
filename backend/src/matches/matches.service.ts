@@ -8,6 +8,52 @@ import { CreateMatchDto } from "./dto/create-match.dto";
 import { UpdateMatchParticipantsDto } from "./dto/update-match-participants.dto";
 import { UpdateMatchResultDto } from "./dto/update-match-result.dto";
 
+type MatchTeam = {
+  id?: string;
+  code: string;
+  name: string;
+  flag: string;
+  group?: string | null;
+};
+
+type MatchWithTeams = {
+  id: string;
+  kickoff: Date;
+  status: MatchStatus;
+  phase: string | null;
+  group: string | null;
+  homeGoals: number | null;
+  awayGoals: number | null;
+  homeTeam: MatchTeam;
+  awayTeam: MatchTeam;
+  scorers: { name: string }[];
+};
+
+type GroupStandingRow = {
+  team: MatchTeam;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+};
+
+type GroupStandingTable = {
+  complete: boolean;
+  rows: GroupStandingRow[];
+};
+
+type ParticipantResolverContext = {
+  groupTables: Map<string, GroupStandingTable>;
+  matchByNumber: Map<string, MatchWithTeams>;
+  thirdPlaceSlotAssignments: Map<string, MatchTeam>;
+  cache: Map<string, MatchTeam | null>;
+  visitedMatchIds: Set<string>;
+};
+
 @Injectable()
 export class MatchesService {
   constructor(
@@ -17,33 +63,23 @@ export class MatchesService {
   ) {}
 
   async findAll() {
-    const matches = await this.prisma.match.findMany({
-      include: {
-        homeTeam: true,
-        awayTeam: true,
-        scorers: { orderBy: { sortOrder: "asc" } },
-      },
-      orderBy: { kickoff: "asc" },
-    });
+    const matches = await this.findAllRaw();
+    const context = this.buildParticipantResolverContext(matches);
 
-    return matches.map((match) => this.toMatchResponse(match));
+    return matches.map((match) =>
+      this.toMatchResponse(this.resolveMatchParticipants(match, context)),
+    );
   }
 
   async findById(id: string) {
-    const match = await this.prisma.match.findUnique({
-      where: { id },
-      include: {
-        homeTeam: true,
-        awayTeam: true,
-        scorers: { orderBy: { sortOrder: "asc" } },
-      },
-    });
+    const matches = await this.findAllRaw();
+    const match = matches.find((candidate) => candidate.id === id);
 
     if (!match) {
       throw new NotFoundException("Partido no encontrado");
     }
 
-    return match;
+    return this.resolveMatchParticipants(match, this.buildParticipantResolverContext(matches));
   }
 
   async create(dto: CreateMatchDto) {
@@ -75,7 +111,7 @@ export class MatchesService {
   }
 
   async updateStatus(id: string, status: MatchStatus) {
-    await this.findById(id);
+    await this.findRawById(id);
     const match = await this.prisma.match.update({
       where: { id },
       data: { status },
@@ -91,7 +127,7 @@ export class MatchesService {
   }
 
   async updateParticipants(id: string, dto: UpdateMatchParticipantsDto) {
-    const match = await this.findById(id);
+    const match = await this.findRawById(id);
     if (
       match.status !== MatchStatus.pending ||
       match.homeGoals !== null ||
@@ -198,24 +234,13 @@ export class MatchesService {
   }
 
   async delete(id: string) {
-    await this.findById(id);
+    await this.findRawById(id);
     await this.prisma.match.delete({ where: { id } });
     await this.scoringService.recalculateAllUserPoints();
     return { ok: true };
   }
 
-  toMatchResponse(match: {
-    id: string;
-    kickoff: Date;
-    status: MatchStatus;
-    phase: string | null;
-    group: string | null;
-    homeGoals: number | null;
-    awayGoals: number | null;
-    homeTeam: { code: string; name: string; flag: string; group?: string | null };
-    awayTeam: { code: string; name: string; flag: string; group?: string | null };
-    scorers: { name: string }[];
-  }) {
+  toMatchResponse(match: MatchWithTeams) {
     const result = this.toResultResponse(match);
 
     return {
@@ -281,5 +306,366 @@ export class MatchesService {
 
   private isPlaceholderTeam(code: string) {
     return code.startsWith("slot-");
+  }
+
+  private async findAllRaw(): Promise<MatchWithTeams[]> {
+    return this.prisma.match.findMany({
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        scorers: { orderBy: { sortOrder: "asc" } },
+      },
+      orderBy: { kickoff: "asc" },
+    });
+  }
+
+  private async findRawById(id: string): Promise<MatchWithTeams> {
+    const match = await this.prisma.match.findUnique({
+      where: { id },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        scorers: { orderBy: { sortOrder: "asc" } },
+      },
+    });
+
+    if (!match) {
+      throw new NotFoundException("Partido no encontrado");
+    }
+
+    return match;
+  }
+
+  private buildParticipantResolverContext(matches: MatchWithTeams[]): ParticipantResolverContext {
+    const groupTables = this.buildGroupTables(matches);
+    const matchByNumber = new Map(
+      matches.map((candidate) => [this.getMatchNumber(candidate.id), candidate]),
+    );
+
+    return {
+      groupTables,
+      matchByNumber,
+      thirdPlaceSlotAssignments: this.buildThirdPlaceSlotAssignments(matches, groupTables),
+      cache: new Map<string, MatchTeam | null>(),
+      visitedMatchIds: new Set(),
+    };
+  }
+
+  private resolveMatchParticipants(match: MatchWithTeams, context: ParticipantResolverContext) {
+    const visitedMatchIds = new Set(context.visitedMatchIds);
+    visitedMatchIds.add(match.id);
+
+    const homeTeam = this.resolveTeamSlot(match.homeTeam, {
+      ...context,
+      visitedMatchIds,
+    });
+    const awayTeam = this.resolveTeamSlot(match.awayTeam, {
+      ...context,
+      visitedMatchIds,
+    });
+
+    return {
+      ...match,
+      homeTeam: homeTeam ?? match.homeTeam,
+      awayTeam: awayTeam ?? match.awayTeam,
+    };
+  }
+
+  private resolveTeamSlot(team: MatchTeam, context: ParticipantResolverContext): MatchTeam | null {
+    if (!this.isPlaceholderTeam(team.code)) {
+      return team;
+    }
+
+    const slot = this.normalizeSlotLabel(team.name);
+    if (!slot) {
+      return null;
+    }
+
+    const cached = context.cache.get(slot);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    context.cache.set(slot, null);
+
+    const groupPosition = slot.match(/^([123])([A-L])$/);
+    if (groupPosition) {
+      const position = Number(groupPosition[1]);
+      const group = groupPosition[2];
+      const table = context.groupTables.get(group);
+      const resolvedTeam = table?.complete ? (table.rows[position - 1]?.team ?? null) : null;
+      context.cache.set(slot, resolvedTeam);
+      return resolvedTeam;
+    }
+
+    const thirdPlaceCandidates = slot.match(/^3([A-L]{2,})$/);
+    if (thirdPlaceCandidates) {
+      const resolvedTeam = context.thirdPlaceSlotAssignments.get(slot) ?? null;
+      context.cache.set(slot, resolvedTeam);
+      return resolvedTeam;
+    }
+
+    const knockoutReference = slot.match(/^([WL])(\d+)$/);
+    if (knockoutReference) {
+      const resultType = knockoutReference[1];
+      const referencedMatch = context.matchByNumber.get(knockoutReference[2]);
+      const resolvedTeam =
+        referencedMatch && !context.visitedMatchIds.has(referencedMatch.id)
+          ? this.resolveKnockoutReference(referencedMatch, resultType, context)
+          : null;
+      context.cache.set(slot, resolvedTeam);
+      return resolvedTeam;
+    }
+
+    context.cache.set(slot, null);
+    return null;
+  }
+
+  private resolveKnockoutReference(
+    match: MatchWithTeams,
+    resultType: string,
+    context: ParticipantResolverContext,
+  ) {
+    if (match.homeGoals === null || match.awayGoals === null) {
+      return null;
+    }
+
+    const nextVisited = new Set(context.visitedMatchIds);
+    nextVisited.add(match.id);
+    const homeTeam = this.resolveTeamSlot(match.homeTeam, {
+      ...context,
+      visitedMatchIds: nextVisited,
+    });
+    const awayTeam = this.resolveTeamSlot(match.awayTeam, {
+      ...context,
+      visitedMatchIds: nextVisited,
+    });
+
+    if (!homeTeam || !awayTeam || match.homeGoals === match.awayGoals) {
+      return null;
+    }
+
+    const homeWins = match.homeGoals > match.awayGoals;
+    if (resultType === "W") {
+      return homeWins ? homeTeam : awayTeam;
+    }
+
+    return homeWins ? awayTeam : homeTeam;
+  }
+
+  private buildThirdPlaceSlotAssignments(
+    matches: MatchWithTeams[],
+    groupTables: Map<string, GroupStandingTable>,
+  ) {
+    const thirdPlaceSlots = this.getThirdPlaceSlots(matches);
+    if (thirdPlaceSlots.length === 0) {
+      return new Map<string, MatchTeam>();
+    }
+
+    const qualifiedThirdPlaceRows = [...groupTables.entries()]
+      .filter(([, table]) => table.complete)
+      .map(([group, table]) => ({ group, row: table.rows[2] }))
+      .filter((candidate): candidate is { group: string; row: GroupStandingRow } =>
+        Boolean(candidate.row),
+      )
+      .sort((a, b) => this.compareStandingRows(a.row, b.row))
+      .slice(0, thirdPlaceSlots.length);
+
+    const slotsByConstraint = [...thirdPlaceSlots].sort((a, b) => {
+      const aCandidates = this.countThirdPlaceCandidates(a, qualifiedThirdPlaceRows);
+      const bCandidates = this.countThirdPlaceCandidates(b, qualifiedThirdPlaceRows);
+      return aCandidates - bCandidates || a.localeCompare(b, "es");
+    });
+
+    const assignedTeams = new Set<string>();
+    const assignments = new Map<string, MatchTeam>();
+    const solved = this.assignThirdPlaceSlots(
+      slotsByConstraint,
+      qualifiedThirdPlaceRows,
+      assignedTeams,
+      assignments,
+    );
+
+    return solved ? assignments : new Map<string, MatchTeam>();
+  }
+
+  private getThirdPlaceSlots(matches: MatchWithTeams[]) {
+    const slots: string[] = [];
+    const seen = new Set<string>();
+
+    for (const match of matches) {
+      for (const team of [match.homeTeam, match.awayTeam]) {
+        if (!this.isPlaceholderTeam(team.code)) {
+          continue;
+        }
+
+        const slot = this.normalizeSlotLabel(team.name);
+        if (/^3[A-L]{2,}$/.test(slot) && !seen.has(slot)) {
+          seen.add(slot);
+          slots.push(slot);
+        }
+      }
+    }
+
+    return slots;
+  }
+
+  private countThirdPlaceCandidates(
+    slot: string,
+    candidates: { group: string; row: GroupStandingRow }[],
+  ) {
+    const allowedGroups = new Set(slot.slice(1).split(""));
+    return candidates.filter((candidate) => allowedGroups.has(candidate.group)).length;
+  }
+
+  private assignThirdPlaceSlots(
+    slots: string[],
+    candidates: { group: string; row: GroupStandingRow }[],
+    assignedTeams: Set<string>,
+    assignments: Map<string, MatchTeam>,
+    slotIndex = 0,
+  ): boolean {
+    if (slotIndex >= slots.length) {
+      return true;
+    }
+
+    const slot = slots[slotIndex];
+    const allowedGroups = new Set(slot.slice(1).split(""));
+    const availableCandidates = candidates.filter(
+      (candidate) =>
+        allowedGroups.has(candidate.group) && !assignedTeams.has(candidate.row.team.code),
+    );
+
+    for (const candidate of availableCandidates) {
+      assignedTeams.add(candidate.row.team.code);
+      assignments.set(slot, candidate.row.team);
+
+      if (
+        this.assignThirdPlaceSlots(slots, candidates, assignedTeams, assignments, slotIndex + 1)
+      ) {
+        return true;
+      }
+
+      assignedTeams.delete(candidate.row.team.code);
+      assignments.delete(slot);
+    }
+
+    return false;
+  }
+
+  private buildGroupTables(matches: MatchWithTeams[]) {
+    const tables = new Map<string, GroupStandingTable>();
+
+    for (const match of matches) {
+      if (match.phase !== "Group" || !match.group) {
+        continue;
+      }
+
+      const table = this.getOrCreateGroupTable(tables, match.group);
+      this.ensureStandingRow(table, match.homeTeam);
+      this.ensureStandingRow(table, match.awayTeam);
+
+      if (match.homeGoals === null || match.awayGoals === null) {
+        table.complete = false;
+        continue;
+      }
+
+      const homeRow = table.rows.find((row) => row.team.code === match.homeTeam.code);
+      const awayRow = table.rows.find((row) => row.team.code === match.awayTeam.code);
+      if (!homeRow || !awayRow) {
+        table.complete = false;
+        continue;
+      }
+
+      this.applyGroupResult(homeRow, awayRow, match.homeGoals, match.awayGoals);
+    }
+
+    for (const table of tables.values()) {
+      table.rows.sort((a, b) => this.compareStandingRows(a, b));
+    }
+
+    return tables;
+  }
+
+  private getOrCreateGroupTable(tables: Map<string, GroupStandingTable>, group: string) {
+    const existingTable = tables.get(group);
+    if (existingTable) {
+      return existingTable;
+    }
+
+    const table: GroupStandingTable = { complete: true, rows: [] };
+    tables.set(group, table);
+    return table;
+  }
+
+  private ensureStandingRow(table: GroupStandingTable, team: MatchTeam) {
+    if (
+      this.isPlaceholderTeam(team.code) ||
+      table.rows.some((row) => row.team.code === team.code)
+    ) {
+      return;
+    }
+
+    table.rows.push({
+      team,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      goalDifference: 0,
+      points: 0,
+    });
+  }
+
+  private applyGroupResult(
+    homeRow: GroupStandingRow,
+    awayRow: GroupStandingRow,
+    homeGoals: number,
+    awayGoals: number,
+  ) {
+    homeRow.played += 1;
+    awayRow.played += 1;
+    homeRow.goalsFor += homeGoals;
+    homeRow.goalsAgainst += awayGoals;
+    awayRow.goalsFor += awayGoals;
+    awayRow.goalsAgainst += homeGoals;
+
+    if (homeGoals > awayGoals) {
+      homeRow.won += 1;
+      awayRow.lost += 1;
+      homeRow.points += 3;
+    } else if (homeGoals < awayGoals) {
+      awayRow.won += 1;
+      homeRow.lost += 1;
+      awayRow.points += 3;
+    } else {
+      homeRow.drawn += 1;
+      awayRow.drawn += 1;
+      homeRow.points += 1;
+      awayRow.points += 1;
+    }
+
+    homeRow.goalDifference = homeRow.goalsFor - homeRow.goalsAgainst;
+    awayRow.goalDifference = awayRow.goalsFor - awayRow.goalsAgainst;
+  }
+
+  private compareStandingRows(a: GroupStandingRow, b: GroupStandingRow) {
+    return (
+      b.points - a.points ||
+      b.goalDifference - a.goalDifference ||
+      b.goalsFor - a.goalsFor ||
+      a.team.name.localeCompare(b.team.name, "es")
+    );
+  }
+
+  private normalizeSlotLabel(label: string) {
+    return label.trim().toUpperCase().replace(/\s+/g, "");
+  }
+
+  private getMatchNumber(id: string) {
+    const match = id.match(/(\d+)$/);
+    return match ? String(Number(match[1])) : id;
   }
 }
