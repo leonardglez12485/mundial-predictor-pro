@@ -289,125 +289,134 @@ function LoadedPredictionForm({
           </div>
         )}
 
-        <form onSubmit={handleSave} className="space-y-6">
-          <fieldset
-            disabled={locked || !participantsResolved}
-            className="space-y-6 disabled:opacity-60"
-          >
-            <div>
-              <Label className="mb-3 block text-base font-semibold">Marcador predicho</Label>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
-                <div className="space-y-1.5">
-                  <div className="text-center text-xs text-muted-foreground">{match.home.name}</div>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={20}
-                    value={homeGoals}
-                    onChange={(e) => {
-                      const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
-                      setHomeGoals(nextGoals);
-                      setHomeScorers((prev) => resizeScorerList(prev, nextGoals));
-                    }}
-                    className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
+        {!participantsResolved ? (
+          <div className="flex justify-center">
+            <Link to="/">
+              <Button variant="outline">Volver al calendario</Button>
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSave} className="space-y-6">
+            <fieldset disabled={locked} className="space-y-6 disabled:opacity-60">
+              <div>
+                <Label className="mb-3 block text-base font-semibold">Marcador predicho</Label>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
+                  <div className="space-y-1.5">
+                    <div className="text-center text-xs text-muted-foreground">
+                      {match.home.name}
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={homeGoals}
+                      onChange={(e) => {
+                        const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
+                        setHomeGoals(nextGoals);
+                        setHomeScorers((prev) => resizeScorerList(prev, nextGoals));
+                      }}
+                      className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
+                    />
+                  </div>
+                  <div className="text-xl font-bold text-muted-foreground sm:text-2xl">-</div>
+                  <div className="space-y-1.5">
+                    <div className="text-center text-xs text-muted-foreground">
+                      {match.away.name}
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={awayGoals}
+                      onChange={(e) => {
+                        const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
+                        setAwayGoals(nextGoals);
+                        setAwayScorers((prev) => resizeScorerList(prev, nextGoals));
+                      }}
+                      className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 text-center text-sm text-muted-foreground">
+                  Ganador:{" "}
+                  <span className="font-semibold text-foreground">
+                    {winner === "draw"
+                      ? "Empate"
+                      : winner === "home"
+                        ? match.home.name
+                        : match.away.name}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-3 block text-base font-semibold">Goleadores</Label>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Si el gol es en contra, elegí{" "}
+                  <span className="font-semibold text-foreground">{OWN_GOAL_SCORER_NAME}</span>.
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <PredictionScorerSection
+                    team={match.home}
+                    goalCount={homeGoals}
+                    players={homePlayers}
+                    playersLoading={playersLoading}
+                    scorers={homeScorers}
+                    onChange={setHomeScorers}
+                  />
+                  <PredictionScorerSection
+                    team={match.away}
+                    goalCount={awayGoals}
+                    players={awayPlayers}
+                    playersLoading={playersLoading}
+                    scorers={awayScorers}
+                    onChange={setAwayScorers}
                   />
                 </div>
-                <div className="text-xl font-bold text-muted-foreground sm:text-2xl">-</div>
-                <div className="space-y-1.5">
-                  <div className="text-center text-xs text-muted-foreground">{match.away.name}</div>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={20}
-                    value={awayGoals}
-                    onChange={(e) => {
-                      const nextGoals = Math.max(0, parseInt(e.target.value) || 0);
-                      setAwayGoals(nextGoals);
-                      setAwayScorers((prev) => resizeScorerList(prev, nextGoals));
-                    }}
-                    className="h-12 text-center text-xl font-bold sm:h-14 sm:text-2xl"
-                  />
-                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  +2 puntos por cada goleador acertado
+                </p>
               </div>
-              <div className="mt-3 text-center text-sm text-muted-foreground">
-                Ganador:{" "}
-                <span className="font-semibold text-foreground">
-                  {winner === "draw"
-                    ? "Empate"
-                    : winner === "home"
-                      ? match.home.name
-                      : match.away.name}
-                </span>
+
+              <div className="rounded-xl border bg-secondary/40 p-4 text-sm">
+                <div className="mb-2 font-semibold">Sistema de puntos</div>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>
+                    ✓ Acertar el ganador: <strong className="text-foreground">+3 pts</strong>
+                  </li>
+                  <li>
+                    ✓ Acertar el marcador exacto:{" "}
+                    <strong className="text-foreground">+5 pts adicionales</strong>
+                  </li>
+                  <li>
+                    ✓ Cada goleador correcto: <strong className="text-foreground">+2 pts</strong>
+                  </li>
+                </ul>
               </div>
-            </div>
+            </fieldset>
 
-            <div>
-              <Label className="mb-3 block text-base font-semibold">Goleadores</Label>
-              <p className="mb-3 text-xs text-muted-foreground">
-                Si el gol es en contra, elegí{" "}
-                <span className="font-semibold text-foreground">{OWN_GOAL_SCORER_NAME}</span>.
-              </p>
-              <div className="grid gap-4 md:grid-cols-2">
-                <PredictionScorerSection
-                  team={match.home}
-                  goalCount={homeGoals}
-                  players={homePlayers}
-                  playersLoading={playersLoading}
-                  scorers={homeScorers}
-                  onChange={setHomeScorers}
-                />
-                <PredictionScorerSection
-                  team={match.away}
-                  goalCount={awayGoals}
-                  players={awayPlayers}
-                  playersLoading={playersLoading}
-                  scorers={awayScorers}
-                  onChange={setAwayScorers}
-                />
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                +2 puntos por cada goleador acertado
-              </p>
-            </div>
+            {!locked && (
+              <Button
+                type="submit"
+                className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {existing ? "Actualizar predicción" : "Guardar predicción"}
+              </Button>
+            )}
 
-            <div className="rounded-xl border bg-secondary/40 p-4 text-sm">
-              <div className="mb-2 font-semibold">Sistema de puntos</div>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>
-                  ✓ Acertar el ganador: <strong className="text-foreground">+3 pts</strong>
-                </li>
-                <li>
-                  ✓ Acertar el marcador exacto:{" "}
-                  <strong className="text-foreground">+5 pts adicionales</strong>
-                </li>
-                <li>
-                  ✓ Cada goleador correcto: <strong className="text-foreground">+2 pts</strong>
-                </li>
-              </ul>
-            </div>
-          </fieldset>
-
-          {!locked && participantsResolved && (
-            <Button
-              type="submit"
-              className="h-12 w-full bg-[var(--gradient-primary)] text-base font-semibold shadow-[var(--shadow-soft)]"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {existing ? "Actualizar predicción" : "Guardar predicción"}
-            </Button>
-          )}
-
-          {locked && participantsResolved && !finished && (
-            <Button
-              type="button"
-              disabled
-              variant="outline"
-              className="h-12 w-full text-base font-semibold"
-            >
-              <Lock className="mr-2 h-4 w-4" /> Cerrado
-            </Button>
-          )}
-        </form>
+            {locked && !finished && (
+              <Button
+                type="button"
+                disabled
+                variant="outline"
+                className="h-12 w-full text-base font-semibold"
+              >
+                <Lock className="mr-2 h-4 w-4" /> Cerrado
+              </Button>
+            )}
+          </form>
+        )}
       </Card>
     </main>
   );

@@ -232,6 +232,16 @@ export const api = {
       );
     },
     detail(code: string) {
+      if (code.startsWith("slot-")) {
+        const placeholderName = code.replace(/^slot-/, "").toUpperCase();
+        return Promise.resolve({
+          code,
+          name: placeholderName,
+          flag: placeholderName,
+          players: [],
+        });
+      }
+
       return request<TeamDetail>(
         `/teams/${code}`,
         { method: "GET" },
