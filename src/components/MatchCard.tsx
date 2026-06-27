@@ -105,30 +105,31 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
       )}
 
-      <Link
-        to={isAdmin ? "/admin" : "/match/$matchId"}
-        params={isAdmin ? undefined : { matchId: match.id }}
-      >
-        <Button
-          variant={locked ? "outline" : "default"}
-          className="w-full"
-          disabled={isAdmin ? false : locked || !participantsResolved}
-        >
-          {isAdmin ? (
-            <>Gestionar partido</>
-          ) : !participantsResolved ? (
+      {isAdmin ? (
+        <Link to="/admin">
+          <Button variant="default" className="w-full">
+            Gestionar partido
+          </Button>
+        </Link>
+      ) : locked || !participantsResolved ? (
+        <Button variant={locked ? "outline" : "default"} className="w-full" disabled>
+          {!participantsResolved ? (
             <>Esperando clasificados</>
           ) : locked ? (
             <>
               <Lock className="mr-2 h-4 w-4" /> Cerrado
             </>
-          ) : prediction ? (
-            "Editar predicción"
           ) : (
-            "Hacer predicción"
+            "Cerrado"
           )}
         </Button>
-      </Link>
+      ) : (
+        <Link to="/match/$matchId" params={{ matchId: match.id }}>
+          <Button variant="default" className="w-full">
+            {prediction ? "Editar predicción" : "Hacer predicción"}
+          </Button>
+        </Link>
+      )}
     </Card>
   );
 }
