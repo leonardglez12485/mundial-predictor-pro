@@ -23,8 +23,8 @@ test("calcula puntos por ganador, marcador exacto y goleadores sin duplicar acie
   assert.equal(points, 12);
 });
 
-test("bloquea predicciones dentro de los 60 minutos previos al inicio", () => {
-  const kickoff = new Date(Date.now() + 59 * 60 * 1000);
+test("bloquea predicciones dentro de los 15 minutos previos al inicio", () => {
+  const kickoff = new Date(Date.now() + 14 * 60 * 1000);
 
   assert.equal(service.isPredictionLocked({ kickoff, status: MatchStatus.pending }), true);
   assert.equal(

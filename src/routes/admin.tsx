@@ -298,6 +298,13 @@ function AdminMatchRow({
     let active = true;
 
     const loadPlayers = async () => {
+      if (!participantsResolved) {
+        setHomePlayers([]);
+        setAwayPlayers([]);
+        setPlayersLoading(false);
+        return;
+      }
+
       setPlayersLoading(true);
       try {
         const [homeTeam, awayTeam] = await Promise.all([
@@ -327,7 +334,7 @@ function AdminMatchRow({
     return () => {
       active = false;
     };
-  }, [open, match.away.code, match.home.code]);
+  }, [open, match.away.code, match.home.code, participantsResolved]);
 
   const saveResult = () => {
     const normalizedHomeScorers = homeScorers.map((scorer) => scorer.trim()).filter(Boolean);
@@ -597,7 +604,9 @@ function ScorerTeamSection({
                 }}
               >
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={`Seleccionar jugador o ${OWN_GOAL_SCORER_NAME.toLowerCase()} de ${team.name}`} />
+                  <SelectValue
+                    placeholder={`Seleccionar jugador o ${OWN_GOAL_SCORER_NAME.toLowerCase()} de ${team.name}`}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {playerOptions.map((playerOption) => (
@@ -624,12 +633,10 @@ function resizeScorerList(scorers: string[], goalCount: number) {
 }
 
 function buildAdminPlayerOptions(players: Player[], selectedScorers: string[]) {
-  const activeNames = new Set(
-    [
-      OWN_GOAL_SCORER_NAME,
-      ...players.filter((player) => player.active).map((player) => player.name),
-    ],
-  );
+  const activeNames = new Set([
+    OWN_GOAL_SCORER_NAME,
+    ...players.filter((player) => player.active).map((player) => player.name),
+  ]);
   const optionNames = Array.from(
     new Set([
       OWN_GOAL_SCORER_NAME,

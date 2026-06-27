@@ -136,7 +136,7 @@ function LoadedPredictionForm({
   );
   const [homePlayers, setHomePlayers] = useState<Player[]>([]);
   const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
-  const [playersLoading, setPlayersLoading] = useState(true);
+  const [playersLoading, setPlayersLoading] = useState(() => hasResolvedParticipants(match));
   const locked = isPredictionLocked(match);
   const participantsResolved = hasResolvedParticipants(match);
   const winner: "home" | "away" | "draw" =
@@ -148,6 +148,14 @@ function LoadedPredictionForm({
     let active = true;
 
     const loadPlayers = async () => {
+      if (!participantsResolved) {
+        setHomePlayers([]);
+        setAwayPlayers([]);
+        setPlayersLoading(false);
+        return;
+      }
+
+      setPlayersLoading(true);
       try {
         const [homeTeam, awayTeam] = await Promise.all([
           api.teams.detail(match.home.code),
@@ -176,7 +184,7 @@ function LoadedPredictionForm({
     return () => {
       active = false;
     };
-  }, [match]);
+  }, [match.away.code, match.home.code, participantsResolved]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,7 +266,7 @@ function LoadedPredictionForm({
             <div>
               <div className="font-semibold text-destructive">Predicción cerrada</div>
               <div className="text-destructive/80">
-                Solo podés predecir en estado pendiente. Una hora antes del inicio, y en cualquier
+                Solo podés predecir en estado pendiente. 15 minutos antes del inicio, y en cualquier
                 otro estado, la predicción queda cerrada.
               </div>
             </div>
