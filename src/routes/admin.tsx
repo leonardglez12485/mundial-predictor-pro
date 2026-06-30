@@ -294,7 +294,8 @@ function AdminMatchRow({
   const [awayParticipantCode, setAwayParticipantCode] = useState("");
   const participantsResolved = hasResolvedParticipants(match);
   const knockout = isKnockoutMatch(match);
-  const needsPenalties = knockout && hg === ag;
+  const tiedScore = hg === ag;
+  const needsPenalties = tiedScore;
 
   useEffect(() => {
     if (!open) {
@@ -523,7 +524,7 @@ function AdminMatchRow({
             </div>
           </div>
 
-          {knockout && (
+          {(knockout || tiedScore) && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Definición por penales
