@@ -44,6 +44,10 @@ export class PredictionsService {
       throw new ForbiddenException("La predicción ya está cerrada para este partido");
     }
 
+    if (this.isKnockoutMatch(match) && dto.homeGoals === dto.awayGoals && dto.winner === "draw") {
+      throw new BadRequestException("En eliminatorias debés elegir quién clasifica");
+    }
+
     const parsedScorers = dto.scorers
       .map((scorer) => parseStoredScorer(scorer))
       .filter((scorer) => scorer.name);
@@ -145,5 +149,9 @@ export class PredictionsService {
       scorers: prediction.scorers.map((scorer) => scorer.name),
       updatedAt: prediction.updatedAt.toISOString(),
     };
+  }
+
+  private isKnockoutMatch(match: { phase: string | null; group: string | null }) {
+    return Boolean(match.phase && match.phase !== "Group" && !match.group);
   }
 }

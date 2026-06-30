@@ -316,6 +316,8 @@ export const api = {
       result: {
         homeGoals: number;
         awayGoals: number;
+        homePenaltyGoals?: number;
+        awayPenaltyGoals?: number;
         homeScorers: string[];
         awayScorers: string[];
       },

@@ -10,6 +10,9 @@ export interface MatchScorer {
 export interface MatchResult {
   homeGoals: number;
   awayGoals: number;
+  homePenaltyGoals?: number;
+  awayPenaltyGoals?: number;
+  winner?: "home" | "away" | "draw";
   scorers: string[];
   homeScorers: string[];
   awayScorers: string[];

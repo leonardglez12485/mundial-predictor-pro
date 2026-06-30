@@ -26,7 +26,12 @@ import {
 import { ArrowLeft, Lock, Trophy, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Flag } from "@/components/Flag";
-import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
+import {
+  formatMatchStage,
+  hasPenaltyShootout,
+  hasResolvedParticipants,
+  isKnockoutMatch,
+} from "@/lib/match-display";
 import type { Match, Player, Prediction, User } from "@/lib/types";
 
 export const Route = createFileRoute("/match/$matchId")({
@@ -134,13 +139,23 @@ function LoadedPredictionForm({
   const [awayScorers, setAwayScorers] = useState(() =>
     resizeScorerList(initialScorers.awayScorers, existing?.awayGoals ?? 1),
   );
+  const [tiebreakWinner, setTiebreakWinner] = useState<"home" | "away">(
+    existing?.winner === "away" ? "away" : "home",
+  );
   const [homePlayers, setHomePlayers] = useState<Player[]>([]);
   const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
   const [playersLoading, setPlayersLoading] = useState(() => hasResolvedParticipants(match));
   const locked = isPredictionLocked(match);
   const participantsResolved = hasResolvedParticipants(match);
+  const knockout = isKnockoutMatch(match);
   const winner: "home" | "away" | "draw" =
-    homeGoals > awayGoals ? "home" : homeGoals < awayGoals ? "away" : "draw";
+    homeGoals > awayGoals
+      ? "home"
+      : homeGoals < awayGoals
+        ? "away"
+        : knockout
+          ? tiebreakWinner
+          : "draw";
   const finished = match.status === "finished";
   const earnedPoints = finished && existing ? calculatePoints(existing, match) : 0;
 
@@ -281,6 +296,11 @@ function LoadedPredictionForm({
             <div className="my-1 text-3xl font-black text-primary-deep">
               {match.result.homeGoals} - {match.result.awayGoals}
             </div>
+            {hasPenaltyShootout(match) && (
+              <div className="text-sm font-semibold text-muted-foreground">
+                Penales: {match.result.homePenaltyGoals} - {match.result.awayPenaltyGoals}
+              </div>
+            )}
             {existing && (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-sm font-bold text-primary-foreground">
                 <Trophy className="h-3.5 w-3.5" /> Ganaste {earnedPoints} puntos
@@ -347,6 +367,28 @@ function LoadedPredictionForm({
                         : match.away.name}
                   </span>
                 </div>
+                {knockout && homeGoals === awayGoals && (
+                  <div className="mx-auto mt-3 max-w-xs space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Clasifica por penales
+                    </Label>
+                    <Select
+                      value={tiebreakWinner}
+                      onValueChange={(value) => setTiebreakWinner(value as "home" | "away")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="home">{match.home.name}</SelectItem>
+                        <SelectItem value="away">{match.away.name}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Los penales definen el clasificado; no cuentan como goleadores.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>

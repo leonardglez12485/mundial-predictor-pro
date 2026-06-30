@@ -24,6 +24,8 @@ type MatchWithTeams = {
   group: string | null;
   homeGoals: number | null;
   awayGoals: number | null;
+  homePenaltyGoals?: number | null;
+  awayPenaltyGoals?: number | null;
   homeTeam: MatchTeam;
   awayTeam: MatchTeam;
   scorers: { name: string }[];
@@ -201,12 +203,30 @@ export class MatchesService {
       );
     }
 
+    const hasPenaltyInput =
+      dto.homePenaltyGoals !== undefined || dto.awayPenaltyGoals !== undefined;
+    const isKnockout = this.isKnockoutMatch(match);
+    const isDraw = dto.homeGoals === dto.awayGoals;
+    if (isKnockout && isDraw) {
+      if (dto.homePenaltyGoals === undefined || dto.awayPenaltyGoals === undefined) {
+        throw new BadRequestException("Cargá el resultado de penales para definir quién avanza");
+      }
+
+      if (dto.homePenaltyGoals === dto.awayPenaltyGoals) {
+        throw new BadRequestException("La tanda de penales debe tener un ganador");
+      }
+    } else if (hasPenaltyInput) {
+      throw new BadRequestException("Los penales solo se cargan en eliminatorias empatadas");
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.match.update({
         where: { id },
         data: {
           homeGoals: dto.homeGoals,
           awayGoals: dto.awayGoals,
+          homePenaltyGoals: isKnockout && isDraw ? dto.homePenaltyGoals : null,
+          awayPenaltyGoals: isKnockout && isDraw ? dto.awayPenaltyGoals : null,
           status: MatchStatus.finished,
         },
       });
@@ -258,6 +278,8 @@ export class MatchesService {
   private toResultResponse(match: {
     homeGoals: number | null;
     awayGoals: number | null;
+    homePenaltyGoals?: number | null;
+    awayPenaltyGoals?: number | null;
     homeTeam: { code: string };
     awayTeam: { code: string };
     scorers: { name: string }[];
@@ -297,6 +319,9 @@ export class MatchesService {
     return {
       homeGoals: match.homeGoals,
       awayGoals: match.awayGoals,
+      homePenaltyGoals: match.homePenaltyGoals ?? undefined,
+      awayPenaltyGoals: match.awayPenaltyGoals ?? undefined,
+      winner: this.resolveResultWinner(match),
       homeScorers,
       awayScorers,
       scorerEntries,
@@ -441,11 +466,16 @@ export class MatchesService {
       visitedMatchIds: nextVisited,
     });
 
-    if (!homeTeam || !awayTeam || match.homeGoals === match.awayGoals) {
+    if (!homeTeam || !awayTeam) {
       return null;
     }
 
-    const homeWins = match.homeGoals > match.awayGoals;
+    const winner = this.resolveResultWinner(match);
+    if (winner === "draw") {
+      return null;
+    }
+
+    const homeWins = winner === "home";
     if (resultType === "W") {
       return homeWins ? homeTeam : awayTeam;
     }
@@ -557,7 +587,7 @@ export class MatchesService {
     const tables = new Map<string, GroupStandingTable>();
 
     for (const match of matches) {
-      if (match.phase !== "Group" || !match.group) {
+      if (!match.group) {
         continue;
       }
 
@@ -566,14 +596,12 @@ export class MatchesService {
       this.ensureStandingRow(table, match.awayTeam);
 
       if (match.homeGoals === null || match.awayGoals === null) {
-        table.complete = false;
         continue;
       }
 
       const homeRow = table.rows.find((row) => row.team.code === match.homeTeam.code);
       const awayRow = table.rows.find((row) => row.team.code === match.awayTeam.code);
       if (!homeRow || !awayRow) {
-        table.complete = false;
         continue;
       }
 
@@ -582,6 +610,7 @@ export class MatchesService {
 
     for (const table of tables.values()) {
       table.rows.sort((a, b) => this.compareStandingRows(a, b));
+      table.complete = table.rows.length >= 4 && table.rows.every((row) => row.played >= 3);
     }
 
     return tables;
@@ -593,7 +622,7 @@ export class MatchesService {
       return existingTable;
     }
 
-    const table: GroupStandingTable = { complete: true, rows: [] };
+    const table: GroupStandingTable = { complete: false, rows: [] };
     tables.set(group, table);
     return table;
   }
@@ -667,5 +696,40 @@ export class MatchesService {
   private getMatchNumber(id: string) {
     const match = id.match(/(\d+)$/);
     return match ? String(Number(match[1])) : id;
+  }
+
+  private isKnockoutMatch(match: { phase: string | null; group: string | null }) {
+    return Boolean(match.phase && match.phase !== "Group" && !match.group);
+  }
+
+  private resolveResultWinner(match: {
+    homeGoals: number | null;
+    awayGoals: number | null;
+    homePenaltyGoals?: number | null;
+    awayPenaltyGoals?: number | null;
+  }): "home" | "away" | "draw" {
+    if (match.homeGoals === null || match.awayGoals === null) {
+      return "draw";
+    }
+
+    if (match.homeGoals > match.awayGoals) {
+      return "home";
+    }
+
+    if (match.homeGoals < match.awayGoals) {
+      return "away";
+    }
+
+    if (
+      match.homePenaltyGoals !== undefined &&
+      match.homePenaltyGoals !== null &&
+      match.awayPenaltyGoals !== undefined &&
+      match.awayPenaltyGoals !== null &&
+      match.homePenaltyGoals !== match.awayPenaltyGoals
+    ) {
+      return match.homePenaltyGoals > match.awayPenaltyGoals ? "home" : "away";
+    }
+
+    return "draw";
   }
 }

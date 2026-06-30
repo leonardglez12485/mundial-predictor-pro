@@ -8,6 +8,16 @@ export function hasResolvedParticipants(match: Match) {
   return !isPlaceholderTeam(match.home) && !isPlaceholderTeam(match.away);
 }
 
+export function isKnockoutMatch(match: Match) {
+  return Boolean(match.phase && match.phase !== "Group" && !match.group);
+}
+
+export function hasPenaltyShootout(match: Match) {
+  return (
+    match.result?.homePenaltyGoals !== undefined && match.result.awayPenaltyGoals !== undefined
+  );
+}
+
 export function formatMatchStage(match: Match) {
   if (match.phase === "Group" && match.group) {
     return `Grupo ${match.group}`;

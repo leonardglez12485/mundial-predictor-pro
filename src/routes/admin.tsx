@@ -23,7 +23,7 @@ import { Flag } from "@/components/Flag";
 import { Shield, Plus, Save, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createTeamMap, groupTeams } from "@/lib/teams";
-import { hasResolvedParticipants } from "@/lib/match-display";
+import { hasPenaltyShootout, hasResolvedParticipants, isKnockoutMatch } from "@/lib/match-display";
 import { OWN_GOAL_SCORER_NAME } from "@/lib/scorer-entry";
 
 export const Route = createFileRoute("/admin")({
@@ -267,6 +267,8 @@ function AdminMatchRow({
   onResult: (r: {
     homeGoals: number;
     awayGoals: number;
+    homePenaltyGoals?: number;
+    awayPenaltyGoals?: number;
     homeScorers: string[];
     awayScorers: string[];
   }) => Promise<void>;
@@ -277,6 +279,8 @@ function AdminMatchRow({
   const [open, setOpen] = useState(false);
   const [hg, setHg] = useState(match.result?.homeGoals ?? 0);
   const [ag, setAg] = useState(match.result?.awayGoals ?? 0);
+  const [hpg, setHpg] = useState(match.result?.homePenaltyGoals ?? 0);
+  const [apg, setApg] = useState(match.result?.awayPenaltyGoals ?? 0);
   const [homeScorers, setHomeScorers] = useState(() =>
     resizeScorerList(match.result?.homeScorers ?? [], match.result?.homeGoals ?? 0),
   );
@@ -289,6 +293,8 @@ function AdminMatchRow({
   const [homeParticipantCode, setHomeParticipantCode] = useState("");
   const [awayParticipantCode, setAwayParticipantCode] = useState("");
   const participantsResolved = hasResolvedParticipants(match);
+  const knockout = isKnockoutMatch(match);
+  const needsPenalties = knockout && hg === ag;
 
   useEffect(() => {
     if (!open) {
@@ -348,9 +354,15 @@ function AdminMatchRow({
       return toast.error(`El visitante debe tener ${ag} goleador${ag === 1 ? "" : "es"}`);
     }
 
+    if (needsPenalties && hpg === apg) {
+      return toast.error("En penales tiene que haber un ganador");
+    }
+
     void onResult({
       homeGoals: hg,
       awayGoals: ag,
+      homePenaltyGoals: needsPenalties ? hpg : undefined,
+      awayPenaltyGoals: needsPenalties ? apg : undefined,
       homeScorers: normalizedHomeScorers,
       awayScorers: normalizedAwayScorers,
     });
@@ -379,6 +391,11 @@ function AdminMatchRow({
         <span className="flex-shrink-0 text-muted-foreground">vs</span>
         <Flag team={match.away} size={22} className="flex-shrink-0" />
         <span className="min-w-0 truncate font-medium">{match.away.name}</span>
+        {match.result && hasPenaltyShootout(match) && (
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+            Pen. {match.result.homePenaltyGoals}-{match.result.awayPenaltyGoals}
+          </span>
+        )}
         <span className="w-full text-xs text-muted-foreground sm:ml-auto sm:w-auto">
           {new Date(match.kickoff).toLocaleString("es-UY", {
             dateStyle: "short",
@@ -505,6 +522,43 @@ function AdminMatchRow({
               />
             </div>
           </div>
+
+          {needsPenalties && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Definición por penales
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-[auto_auto] sm:items-end">
+                <div>
+                  <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
+                    Penales local
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={hpg}
+                    onChange={(e) => setHpg(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="h-10 w-full text-center font-bold sm:w-24"
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
+                    Penales visitante
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={apg}
+                    onChange={(e) => setApg(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="h-10 w-full text-center font-bold sm:w-24"
+                  />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                La tanda define quién avanza, pero no suma goleadores.
+              </p>
+            </div>
+          )}
 
           <div className="grid gap-4 lg:grid-cols-2">
             <ScorerTeamSection

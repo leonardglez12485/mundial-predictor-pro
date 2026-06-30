@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsInt, IsString, Min } from "class-validator";
+import { IsArray, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export class UpdateMatchResultDto {
   @Type(() => Number)
@@ -19,4 +19,16 @@ export class UpdateMatchResultDto {
   @IsArray()
   @IsString({ each: true })
   awayScorers!: string[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  homePenaltyGoals?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  awayPenaltyGoals?: number;
 }
