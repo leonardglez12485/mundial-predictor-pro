@@ -9,7 +9,12 @@ export function hasResolvedParticipants(match: Match) {
 }
 
 export function isKnockoutMatch(match: Match) {
-  return !match.group && match.phase !== "Group";
+  const phase = match.phase?.trim().toUpperCase();
+  if (phase) {
+    return phase !== "GROUP";
+  }
+
+  return !match.group;
 }
 
 export function hasPenaltyShootout(match: Match) {

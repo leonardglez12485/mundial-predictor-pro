@@ -699,7 +699,12 @@ export class MatchesService {
   }
 
   private isKnockoutMatch(match: { phase: string | null; group: string | null }) {
-    return !match.group && match.phase !== "Group";
+    const phase = match.phase?.trim().toUpperCase();
+    if (phase) {
+      return phase !== "GROUP";
+    }
+
+    return !match.group;
   }
 
   private resolveResultWinner(match: {

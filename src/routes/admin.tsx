@@ -523,7 +523,7 @@ function AdminMatchRow({
             </div>
           </div>
 
-          {needsPenalties && (
+          {knockout && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Definición por penales
@@ -555,7 +555,9 @@ function AdminMatchRow({
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                La tanda define quién avanza, pero no suma goleadores.
+                {needsPenalties
+                  ? "La tanda define quién avanza, pero no suma goleadores."
+                  : "Solo se usa si el partido termina empatado."}
               </p>
             </div>
           )}
