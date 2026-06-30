@@ -1,3 +1,3 @@
 ALTER TABLE "Match"
-ADD COLUMN "homePenaltyGoals" INTEGER,
-ADD COLUMN "awayPenaltyGoals" INTEGER;
+ADD COLUMN IF NOT EXISTS "homePenaltyGoals" INTEGER,
+ADD COLUMN IF NOT EXISTS "awayPenaltyGoals" INTEGER;
