@@ -64,7 +64,12 @@ export class ScoringService {
     }
 
     let points = 0;
-    const actualWinner = this.resolveResultWinner(match);
+    const actualWinner = this.resolveResultWinner({
+      homeGoals: match.homeGoals,
+      awayGoals: match.awayGoals,
+      homePenaltyGoals: match.homePenaltyGoals,
+      awayPenaltyGoals: match.awayPenaltyGoals,
+    });
 
     if (prediction.winner === actualWinner) {
       points += 3;
