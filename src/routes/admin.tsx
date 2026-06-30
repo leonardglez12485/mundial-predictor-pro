@@ -142,7 +142,9 @@ function AdminPanel() {
         </div>
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Panel de administración</h1>
-          <p className="text-sm text-muted-foreground">Crear partidos y cargar resultados</p>
+          <p className="text-sm text-muted-foreground">
+            Crear partidos y cargar resultados · Penales v2
+          </p>
         </div>
       </div>
 
@@ -527,7 +529,7 @@ function AdminMatchRow({
           {(knockout || tiedScore) && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Definición por penales
+                Definición por penales {needsPenalties ? "(obligatoria)" : ""}
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-[auto_auto] sm:items-end">
                 <div>
