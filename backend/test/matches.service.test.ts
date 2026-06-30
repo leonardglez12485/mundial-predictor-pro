@@ -97,6 +97,18 @@ test("resuelve cruces de eliminatoria desde grupos completos", async () => {
         findMany: async () => [
           ...groupMatches,
           {
+            id: "match-extra-pending",
+            kickoff: new Date(),
+            status: MatchStatus.pending,
+            phase: "Group",
+            group: "A",
+            homeGoals: null,
+            awayGoals: null,
+            homeTeam: groupATeams[0],
+            awayTeam: groupATeams[1],
+            scorers: [],
+          },
+          {
             id: "match-073",
             kickoff: new Date(),
             status: MatchStatus.pending,
@@ -123,4 +135,53 @@ test("resuelve cruces de eliminatoria desde grupos completos", async () => {
 
   assert.equal(resolvedMatch?.home.code, "a2");
   assert.equal(resolvedMatch?.away.code, "b2");
+});
+
+test("resuelve ganador de eliminatoria por penales", async () => {
+  const homeTeam = { id: "uy", code: "uy", name: "Uruguay", flag: "UY" };
+  const awayTeam = { id: "ar", code: "ar", name: "Argentina", flag: "AR" };
+  const service = new MatchesService(
+    {
+      match: {
+        findMany: async () => [
+          {
+            id: "match-073",
+            kickoff: new Date(),
+            status: MatchStatus.finished,
+            phase: "R32",
+            group: null,
+            homeGoals: 1,
+            awayGoals: 1,
+            homePenaltyGoals: 4,
+            awayPenaltyGoals: 3,
+            homeTeam,
+            awayTeam,
+            scorers: [],
+          },
+          {
+            id: "match-090",
+            kickoff: new Date(),
+            status: MatchStatus.pending,
+            phase: "R16",
+            group: null,
+            homeGoals: null,
+            awayGoals: null,
+            homeTeam: { id: "slot-w73", code: "slot-w73", name: "W73", flag: "W73" },
+            awayTeam: { id: "slot-1a", code: "slot-1a", name: "1A", flag: "1A" },
+            scorers: [],
+          },
+        ],
+      },
+    } as never,
+    {
+      toTeamResponse: (input: { code: string; name: string; flag: string; group?: string }) =>
+        input,
+    } as never,
+    { resolveMatchStatus: (input: { status: MatchStatus }) => input.status } as never,
+  );
+
+  const matches = await service.findAll();
+  const nextMatch = matches.find((match) => match.id === "match-090");
+
+  assert.equal(nextMatch?.home.code, "uy");
 });

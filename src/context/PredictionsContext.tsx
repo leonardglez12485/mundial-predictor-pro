@@ -17,7 +17,14 @@ interface PredictionsState {
   addMatch: (m: Match) => Promise<void>;
   updateMatchResult: (
     id: string,
-    result: { homeGoals: number; awayGoals: number; homeScorers: string[]; awayScorers: string[] },
+    result: {
+      homeGoals: number;
+      awayGoals: number;
+      homePenaltyGoals?: number;
+      awayPenaltyGoals?: number;
+      homeScorers: string[];
+      awayScorers: string[];
+    },
   ) => Promise<void>;
   setMatchStatus: (id: string, status: Match["status"]) => Promise<void>;
   resolveMatchParticipants: (

@@ -8,7 +8,7 @@ import { Lock, Clock, CheckCircle2, Radio, TimerReset } from "lucide-react";
 import { usePredictions } from "@/context/PredictionsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Flag } from "@/components/Flag";
-import { formatMatchStage, hasResolvedParticipants } from "@/lib/match-display";
+import { formatMatchStage, hasPenaltyShootout, hasResolvedParticipants } from "@/lib/match-display";
 
 const statusConfig = {
   pending: { label: "Pendiente", color: "bg-secondary text-secondary-foreground", icon: Clock },
@@ -64,10 +64,17 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
         <div className="flex min-w-[66px] flex-col items-center rounded-lg bg-secondary/55 px-2 py-1.5">
           {match.result ? (
-            <div className="text-lg font-black tabular-nums sm:text-xl">
-              {match.result.homeGoals} <span className="text-muted-foreground">-</span>{" "}
-              {match.result.awayGoals}
-            </div>
+            <>
+              <div className="text-lg font-black tabular-nums sm:text-xl">
+                {match.result.homeGoals} <span className="text-muted-foreground">-</span>{" "}
+                {match.result.awayGoals}
+              </div>
+              {hasPenaltyShootout(match) && (
+                <div className="text-[11px] font-semibold text-muted-foreground">
+                  Pen. {match.result.homePenaltyGoals}-{match.result.awayPenaltyGoals}
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-base font-black text-muted-foreground sm:text-lg">VS</div>
           )}

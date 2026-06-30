@@ -54,6 +54,8 @@ export class ScoringService {
     match: {
       homeGoals: number | null;
       awayGoals: number | null;
+      homePenaltyGoals?: number | null;
+      awayPenaltyGoals?: number | null;
       scorers: { name: string }[];
     },
   ): number {
@@ -62,12 +64,7 @@ export class ScoringService {
     }
 
     let points = 0;
-    const actualWinner =
-      match.homeGoals > match.awayGoals
-        ? PredictionWinner.home
-        : match.homeGoals < match.awayGoals
-          ? PredictionWinner.away
-          : PredictionWinner.draw;
+    const actualWinner = this.resolveResultWinner(match);
 
     if (prediction.winner === actualWinner) {
       points += 3;
@@ -136,5 +133,34 @@ export class ScoringService {
         this.prisma.user.update({ where: { id: userId }, data: { points } }),
       ),
     ]);
+  }
+
+  private resolveResultWinner(match: {
+    homeGoals: number;
+    awayGoals: number;
+    homePenaltyGoals?: number | null;
+    awayPenaltyGoals?: number | null;
+  }) {
+    if (match.homeGoals > match.awayGoals) {
+      return PredictionWinner.home;
+    }
+
+    if (match.homeGoals < match.awayGoals) {
+      return PredictionWinner.away;
+    }
+
+    if (
+      match.homePenaltyGoals !== undefined &&
+      match.homePenaltyGoals !== null &&
+      match.awayPenaltyGoals !== undefined &&
+      match.awayPenaltyGoals !== null &&
+      match.homePenaltyGoals !== match.awayPenaltyGoals
+    ) {
+      return match.homePenaltyGoals > match.awayPenaltyGoals
+        ? PredictionWinner.home
+        : PredictionWinner.away;
+    }
+
+    return PredictionWinner.draw;
   }
 }

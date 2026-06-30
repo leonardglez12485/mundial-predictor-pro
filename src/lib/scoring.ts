@@ -37,12 +37,7 @@ export function isPredictionLocked(match: Match): boolean {
 export function calculatePoints(prediction: Prediction, match: Match): number {
   if (!match.result) return 0;
   let pts = 0;
-  const actualWinner: "home" | "away" | "draw" =
-    match.result.homeGoals > match.result.awayGoals
-      ? "home"
-      : match.result.homeGoals < match.result.awayGoals
-        ? "away"
-        : "draw";
+  const actualWinner = resolveResultWinner(match.result);
 
   if (prediction.winner === actualWinner) pts += 3;
   if (
@@ -66,6 +61,20 @@ export function calculatePoints(prediction: Prediction, match: Match): number {
     }
   }
   return pts;
+}
+
+function resolveResultWinner(result: Match["result"]): "home" | "away" | "draw" {
+  if (!result) return "draw";
+  if (result.homeGoals > result.awayGoals) return "home";
+  if (result.homeGoals < result.awayGoals) return "away";
+  if (
+    result.homePenaltyGoals !== undefined &&
+    result.awayPenaltyGoals !== undefined &&
+    result.homePenaltyGoals !== result.awayPenaltyGoals
+  ) {
+    return result.homePenaltyGoals > result.awayPenaltyGoals ? "home" : "away";
+  }
+  return "draw";
 }
 
 export function formatKickoff(iso: string): string {

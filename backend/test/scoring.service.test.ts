@@ -32,3 +32,23 @@ test("bloquea predicciones dentro de los 15 minutos previos al inicio", () => {
     MatchStatus.starting,
   );
 });
+
+test("calcula ganador por penales sin alterar marcador ni goleadores", () => {
+  const points = service.calculatePredictionPoints(
+    {
+      winner: PredictionWinner.home,
+      homeGoals: 1,
+      awayGoals: 1,
+      scorers: [{ name: "uy::Jugador A" }, { name: "ar::Jugador B" }],
+    },
+    {
+      homeGoals: 1,
+      awayGoals: 1,
+      homePenaltyGoals: 4,
+      awayPenaltyGoals: 3,
+      scorers: [{ name: "uy::Jugador A" }, { name: "ar::Jugador B" }],
+    },
+  );
+
+  assert.equal(points, 12);
+});
