@@ -699,7 +699,7 @@ export class MatchesService {
   }
 
   private isKnockoutMatch(match: { phase: string | null; group: string | null }) {
-    return Boolean(match.phase && match.phase !== "Group" && !match.group);
+    return !match.group && match.phase !== "Group";
   }
 
   private resolveResultWinner(match: {
